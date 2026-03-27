@@ -1,8 +1,7 @@
 /**
- * A Beginner's Guide to Kink â Mobile-First Web Version
- * React component Â· Single file Â· All inline styles
+ * A Beginner's Guide to Kink — Mobile-First Web Version
+ * React component · Single file · All inline styles
  * Mirrors PDF V008 content exactly
- * Last deploy: 2026-03-27T20:15Z
  *
  * Usage: import KinkGuide from './kink-guide'
  * Requires: React 17+ with useState
@@ -10,7 +9,7 @@
 
 import { useState } from "react"
 
-// âââ Palette ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Palette ──────────────────────────────────────────────────────────────────
 const C = {
   bg:          '#FDF8F2',
   ink:         '#2D2D2D',
@@ -31,7 +30,7 @@ const C = {
   white:       '#ffffff',
 }
 
-// âââ Icons ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Icons ────────────────────────────────────────────────────────────────────
 function Icon({ name, size = 24, color = C.sage }) {
   const p = { width: size, height: size, viewBox: "0 0 24 24", fill: color, flexShrink: 0 }
   const none = "none"
@@ -67,7 +66,7 @@ function Icon({ name, size = 24, color = C.sage }) {
   return icons[name] || <svg {...p}><circle cx="12" cy="12" r="8"/></svg>
 }
 
-// âââ Typography helpers âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Typography helpers ───────────────────────────────────────────────────────
 const T = {
   body:    { fontSize: 16, lineHeight: 1.6, color: '#2D2D2D', fontFamily: 'system-ui, -apple-system, sans-serif' },
   small:   { fontSize: 14, lineHeight: 1.5, color: '#2D2D2D' },
@@ -77,7 +76,7 @@ const T = {
   h2:      { fontSize: 20, fontWeight: 700, lineHeight: 1.3, color: C.terraDark, marginTop: 24, marginBottom: 8, fontFamily: 'system-ui, -apple-system, sans-serif' },
 }
 
-// âââ Reusable components ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Reusable components ──────────────────────────────────────────────────────
 const A = ({ href, children }) => (
   <a href={href} target="_blank" rel="noopener noreferrer"
     style={{ color: C.terraDark, fontWeight: 600, textDecoration: 'none' }}>
@@ -114,7 +113,7 @@ const CategoryCard = ({ icon, name, tagline, desc, bg = C.sagePale, border = C.s
     <div>
       <p style={{ margin: '0 0 5px' }}>
         <span style={{ fontWeight: 700, fontSize: 15, color: C.sageDark }}>{name}</span>
-        <span style={{ fontStyle: 'italic', fontSize: 13, color: C.inkMid }}> â {tagline}</span>
+        <span style={{ fontStyle: 'italic', fontSize: 13, color: C.inkMid }}> — {tagline}</span>
       </p>
       <p style={{ ...T.small, margin: 0 }} dangerouslySetInnerHTML={{ __html: desc }} />
     </div>
@@ -158,7 +157,7 @@ const TLDR = ({ text }) => (
   </CalloutBox>
 )
 
-// âââ Section: Cover âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Section: Cover ───────────────────────────────────────────────────────────
 const Cover = () => (
   <div style={{ padding: '40px 20px 28px', textAlign: 'center' }}>
     <div style={{ marginBottom: 20 }}>
@@ -175,7 +174,7 @@ const Cover = () => (
     <p style={{ ...T.caption, fontSize: 15, margin: '0 0 20px' }}>For the curious, the newly-exploring, and everyone who's wondered "what if"</p>
     <div style={{ height: 1, background: C.sagePale, margin: '0 auto 18px', maxWidth: 200 }}/>
     <p style={{ ...T.small, color: C.inkMid, fontStyle: 'italic', margin: '0 0 20px', lineHeight: 1.5 }}>
-      Starting this exploration at any point in life â your 20s, your 40s, your 60s â is completely valid. This guide assumes no prior knowledge.
+      Starting this exploration at any point in life — your 20s, your 40s, your 60s — is completely valid. This guide assumes no prior knowledge.
     </p>
     <BreatheBox
       quote="Curious is exactly the right place to start."
@@ -184,7 +183,7 @@ const Cover = () => (
   </div>
 )
 
-// âââ Nav ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Nav ──────────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
   { id: 's1', label: 'Myths' },
   { id: 's2', label: 'What is kink?' },
@@ -210,16 +209,16 @@ const NavBar = () => (
   </div>
 )
 
-// âââ Section 1: Myths âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Section 1: Myths ─────────────────────────────────────────────────────────
 const S1 = () => (
   <section style={{ padding: '24px 16px 16px' }}>
     <SectionBanner id="s1" eyebrow="Before we begin" title="Let's clear the air" />
-    <p style={{ ...T.body, marginBottom: 16 }}>Most people arrive with a few misconceptions â from movies, jokes, half-remembered headlines, or just decades of not talking about this stuff openly. Let's knock those out first.</p>
+    <p style={{ ...T.body, marginBottom: 16 }}>Most people arrive with a few misconceptions — from movies, jokes, half-remembered headlines, or just decades of not talking about this stuff openly. Let's knock those out first.</p>
     {[
       { icon: 'check',     title: "Myth: People into kink have something wrong with them",
         body: "Research consistently shows kink practitioners report lower anxiety, stronger communication skills, and higher relationship satisfaction than the general population. Curiosity about kink is not a symptom of anything." },
-      { icon: 'hourglass', title: "Myth: This is for younger people â I'm too old to start",
-        body: "There is no age limit on curiosity or self-discovery. Many people begin exploring kink in their 40s, 50s, or later â often because they finally have the self-knowledge, the confidence, and the time to do it thoughtfully. Starting later frequently means starting smarter." },
+      { icon: 'hourglass', title: "Myth: This is for younger people — I'm too old to start",
+        body: "There is no age limit on curiosity or self-discovery. Many people begin exploring kink in their 40s, 50s, or later — often because they finally have the self-knowledge, the confidence, and the time to do it thoughtfully. Starting later frequently means starting smarter." },
       { icon: 'scales',    title: "Myth: The Dominant is in charge; the Submissive just goes along",
         body: "In ethical kink, both people hold real power. The person in the Submissive role can stop everything at any moment with a single word. Many practitioners say the Submissive actually holds more power, because the Dominant's behavior is constrained entirely by consent." },
       { icon: 'heart',     title: "Myth: Kink is primarily about sex",
@@ -230,51 +229,51 @@ const S1 = () => (
   </section>
 )
 
-// âââ Section 2: What is kink? âââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Section 2: What is kink? ─────────────────────────────────────────────────
 const S2 = () => (
   <section style={{ padding: '8px 16px 16px' }}>
     <SectionBanner id="s2" eyebrow="The basics" title="What is kink, exactly?" />
-    <p style={T.body}>The word "kink" is a broad umbrella term for sexual interests, practices, and fantasies that fall outside what a given culture considers conventional. There's no fixed master list â it's personal, contextual, and constantly evolving.</p>
-    <p style={{ ...T.body, marginTop: 12 }}><Term>BDSM</Term> <span style={{ fontStyle: 'italic', color: C.inkMid, fontSize: 14 }}>(an acronym for Bondage/Discipline, Dominance/Submission, and Sadism/Masochism â the largest and most common cluster of kink activities)</span></p>
+    <p style={T.body}>The word "kink" is a broad umbrella term for sexual interests, practices, and fantasies that fall outside what a given culture considers conventional. There's no fixed master list — it's personal, contextual, and constantly evolving.</p>
+    <p style={{ ...T.body, marginTop: 12 }}><Term>BDSM</Term> <span style={{ fontStyle: 'italic', color: C.inkMid, fontSize: 14 }}>(an acronym for Bondage/Discipline, Dominance/Submission, and Sadism/Masochism — the largest and most common cluster of kink activities)</span></p>
     <p style={{ ...T.body, marginTop: 12 }}>Kink and BDSM overlap significantly but aren't identical: kink is the broader umbrella, BDSM is the most common territory within it.</p>
     <p style={{ ...T.body, marginTop: 12, marginBottom: 16 }}>How common is this? More than you'd guess. One major study found nearly half of respondents had tried at least one BDSM activity. A 2014 study found 65% of women and 53% of men had fantasized about being sexually dominated. This is not niche.</p>
     <TLDR text="Kink = anything outside conventional sex. BDSM = the most common type. Both require enthusiastic, ongoing consent. Both are far more common than most people realize." />
   </section>
 )
 
-// âââ Section 3: Consent âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Section 3: Consent ───────────────────────────────────────────────────────
 const S3 = () => (
   <section style={{ padding: '8px 16px 16px' }}>
     <SectionBanner id="s3" eyebrow="The foundation" title="Consent: the one non-negotiable" />
     <p style={{ ...T.body, marginBottom: 16 }}>Before exploring categories, before anything physical, there's consent. The kink community is actually more rigorous about consent than most other sexual contexts.</p>
     <h2 style={T.h2}>Three frameworks you'll hear about</h2>
-    <IconCard icon="shield" title="SSC â Safe, Sane, and Consensual"
-      body="All activity should be physically and emotionally safe, done with a clear mind, and fully agreed upon. The classic framework â simple and effective for most beginners."
+    <IconCard icon="shield" title="SSC — Safe, Sane, and Consensual"
+      body="All activity should be physically and emotionally safe, done with a clear mind, and fully agreed upon. The classic framework — simple and effective for most beginners."
       bg={C.sagePale} border={C.sage} />
-    <IconCard icon="warn" title="RACK â Risk-Aware Consensual Kink"
+    <IconCard icon="warn" title="RACK — Risk-Aware Consensual Kink"
       body="A refinement: some kink carries inherent risk that can't be fully eliminated. The goal becomes risk awareness and active agreement, rather than pretending no risk exists."
       bg={C.sagePale} border={C.sage} iconColor={C.amber} />
-    <IconCard icon="mirror" title="PRICK â Personal Responsibility, Informed Consensual Kink"
+    <IconCard icon="mirror" title="PRICK — Personal Responsibility, Informed Consensual Kink"
       body="The most individual-centered model. Each person owns their research, their limits, and their readiness. You show up prepared, informed, and honest."
       bg={C.sagePale} border={C.sage} />
     <h2 style={T.h2}>Hard limits vs. soft limits</h2>
     <CalloutBox icon="warn" label="Two terms you'll hear constantly" bg={C.amberPale} border={C.amber}>
-      <p style={{ margin: '0 0 8px' }}><Term>Hard limit</Term> â an absolute boundary. A firm no, always, under any circumstances. Non-negotiable. Never pushed, argued with, or tested.</p>
-      <p style={{ margin: '0 0 8px' }}><Term>Soft limit</Term> â something that makes you hesitate. Might be okay with the right partner, after more experience, under specific conditions. Not a yes, not a final no.</p>
+      <p style={{ margin: '0 0 8px' }}><Term>Hard limit</Term> — an absolute boundary. A firm no, always, under any circumstances. Non-negotiable. Never pushed, argued with, or tested.</p>
+      <p style={{ margin: '0 0 8px' }}><Term>Soft limit</Term> — something that makes you hesitate. Might be okay with the right partner, after more experience, under specific conditions. Not a yes, not a final no.</p>
       <p style={{ margin: 0 }}>Making a list of your own limits privately before any conversation with a partner is one of the most useful things a new person can do.</p>
     </CalloutBox>
     <h2 style={T.h2}>Safewords</h2>
     <p style={{ ...T.body, marginBottom: 12 }}>A <Term>safeword</Term> (a word agreed upon in advance that immediately stops all play) is the core safety mechanism of kink. It must be agreed upon before anything begins.</p>
-    <CalloutBox icon="check" label="The traffic light system â most beginner-friendly" bg={C.goldPale} border={C.gold}>
-      <p style={{ margin: '0 0 6px' }}><span style={{ fontWeight: 700, color: C.success }}>â GREEN</span> â All good, keep going</p>
-      <p style={{ margin: '0 0 6px' }}><span style={{ fontWeight: 700, color: C.gold }}>â YELLOW</span> â Slow down, check in with me</p>
-      <p style={{ margin: '0 0 10px' }}><span style={{ fontWeight: 700, color: C.terra }}>â RED</span> â Stop completely, right now</p>
-      <p style={{ margin: 0 }}>If speech might be restricted: agree on a non-verbal signal beforehand â tapping out three times, or holding an object and dropping it.</p>
+    <CalloutBox icon="check" label="The traffic light system — most beginner-friendly" bg={C.goldPale} border={C.gold}>
+      <p style={{ margin: '0 0 6px' }}><span style={{ fontWeight: 700, color: C.success }}>● GREEN</span> — All good, keep going</p>
+      <p style={{ margin: '0 0 6px' }}><span style={{ fontWeight: 700, color: C.gold }}>● YELLOW</span> — Slow down, check in with me</p>
+      <p style={{ margin: '0 0 10px' }}><span style={{ fontWeight: 700, color: C.terra }}>● RED</span> — Stop completely, right now</p>
+      <p style={{ margin: 0 }}>If speech might be restricted: agree on a non-verbal signal beforehand — tapping out three times, or holding an object and dropping it.</p>
     </CalloutBox>
   </section>
 )
 
-// âââ Section 4: The landscape âââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Section 4: The landscape ─────────────────────────────────────────────────
 const S4 = () => (
   <section style={{ padding: '8px 16px 16px' }}>
     <SectionBanner id="s4" eyebrow="What's out there" title="The landscape: categories at a glance" />
@@ -284,10 +283,10 @@ const S4 = () => (
         desc: `The most widely explored area. One partner takes the guiding role (<b style="color:#9E4F2D">Dominant</b> or <b style="color:#9E4F2D">Top</b>), the other follows (<b style="color:#9E4F2D">Submissive</b> or <b style="color:#9E4F2D">Bottom</b>). Can be limited to a single session or an ongoing dynamic. Everything is negotiated in advance.`,
         bg: C.sagePale, border: C.sage },
       { icon: 'lock', name: 'Bondage & Restraint', tagline: 'physical restriction as part of play',
-        desc: `Ranges from holding wrists to elaborate rope work (called <b style="color:#9E4F2D">shibari</b>). The point isn't restriction itself â it's the trust, vulnerability, and sensation. Safety note: never leave someone alone while restrained; always have safety scissors within reach.`,
+        desc: `Ranges from holding wrists to elaborate rope work (called <b style="color:#9E4F2D">shibari</b>). The point isn't restriction itself — it's the trust, vulnerability, and sensation. Safety note: never leave someone alone while restrained; always have safety scissors within reach.`,
         bg: C.terraPale, border: C.terra },
       { icon: 'feather', name: 'Sensation Play', tagline: 'exploring the full range of physical feeling',
-        desc: 'Temperature (ice, warm wax), texture contrast (soft vs. scratchy), blindfolds. Sensation isn\'t just about pleasure â it\'s about presence and full-body awareness. One of the easiest areas to try solo first.',
+        desc: 'Temperature (ice, warm wax), texture contrast (soft vs. scratchy), blindfolds. Sensation isn\'t just about pleasure — it\'s about presence and full-body awareness. One of the easiest areas to try solo first.',
         bg: C.sagePale, border: C.sage },
       { icon: 'hand', name: 'Impact Play', tagline: 'consensual striking',
         desc: 'Spanking, paddling, flogging. Safe zones: buttocks, upper thighs, upper back, shoulders. Avoid: lower back/kidneys, spine, joints, neck, head. Always start lighter than you think you need to.',
@@ -302,76 +301,76 @@ const S4 = () => (
         desc: 'The range is enormous: feet, leather, latex, specific fabrics. Common, normal, and only a concern if they cause distress or require non-consenting partners.',
         bg: C.sagePale, border: C.sage },
       { icon: 'candle', name: 'Temperature Play', tagline: 'hot and cold as sensation tools',
-        desc: 'Ice cubes, warm wax (soy or low-temp candles only â never standard household candles near face or hair). One of the most accessible forms of sensation play to try alone first.',
+        desc: 'Ice cubes, warm wax (soy or low-temp candles only — never standard household candles near face or hair). One of the most accessible forms of sensation play to try alone first.',
         bg: C.terraPale, border: C.terra },
       { icon: 'bubble', name: 'Psychological & Verbal Play', tagline: 'words and tone as the medium',
-        desc: `Easiest to underestimate. Verbal dynamics â commanding language, praise, or consensual humiliation â can be among the most emotionally intense forms of kink. <b style="color:#9E4F2D">Aftercare</b> is especially important here.`,
+        desc: `Easiest to underestimate. Verbal dynamics — commanding language, praise, or consensual humiliation — can be among the most emotionally intense forms of kink. <b style="color:#9E4F2D">Aftercare</b> is especially important here.`,
         bg: C.sagePale, border: C.sage },
     ].map(c => <CategoryCard key={c.name} {...c} />)}
   </section>
 )
 
-// âââ Section 5: Solo ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Section 5: Solo ──────────────────────────────────────────────────────────
 const S5 = () => (
   <section style={{ padding: '8px 16px 16px' }}>
     <SectionBanner id="s5" eyebrow="Starting point" title="Exploring solo first" />
     <p style={{ ...T.body, marginBottom: 16 }}>Solo exploration is exactly where to start. Not as a stepping stone to something else, but as a genuinely valuable stage in itself. One hour of honest private investigation will teach you more about what you actually respond to than months of tentative conversation.</p>
     <h2 style={T.h2}>1. Use fantasy as data</h2>
-    <p style={{ ...T.body, marginBottom: 16 }}>What comes up repeatedly in your imagination, even when you're not trying? Recurring themes aren't labels or diagnoses â they're information. Keep a private note somewhere. Don't judge, just observe.</p>
+    <p style={{ ...T.body, marginBottom: 16 }}>What comes up repeatedly in your imagination, even when you're not trying? Recurring themes aren't labels or diagnoses — they're information. Keep a private note somewhere. Don't judge, just observe.</p>
     <h2 style={T.h2}>2. Do the Yes / No / Maybe List</h2>
     <p style={{ ...T.body, marginBottom: 16 }}>A long list of kink activities rated privately: <strong>Yes</strong> (genuinely interested), <strong>No</strong> (not for me), <strong>Maybe</strong> (open to it with the right context). Search "kink checklist" or "yes no maybe list" for free templates.</p>
     <h2 style={T.h2}>3. Try low-stakes solo experiments</h2>
     <CalloutBox icon="feather" label="Solo experiments by category" bg={C.sagePale} border={C.sage}>
       {[
         ['Sensation play', 'Run an ice cube along your arm. Use a scarf as a blindfold while listening to music. Try soft vs. scratchy textures. Notice which sensations hold your attention.'],
-        ['Temperature play', 'A warm flannel vs. ice. Low-temp soy candles exist specifically for wax play â test on your hand first.'],
+        ['Temperature play', 'A warm flannel vs. ice. Low-temp soy candles exist specifically for wax play — test on your hand first.'],
         ['Restraint / stillness', 'Lie completely still for five minutes and notice the psychological response. Tells you whether stillness feels interesting or anxious.'],
-        ['Fantasy & role framing', 'Try writing or voice-recording a scenario you find interesting. Articulating it â even privately â often clarifies what the actual draw is.'],
+        ['Fantasy & role framing', 'Try writing or voice-recording a scenario you find interesting. Articulating it — even privately — often clarifies what the actual draw is.'],
         ['Psychological dynamics', 'Notice how you respond to being told what to do vs. taking charge in everyday life. Quieter data, but it matters.'],
       ].map(([t, d]) => (
-        <p key={t} style={{ margin: '0 0 8px' }}><strong>{t}</strong> â {d}</p>
+        <p key={t} style={{ margin: '0 0 8px' }}><strong>{t}</strong> — {d}</p>
       ))}
     </CalloutBox>
     <h2 style={T.h2}>4. Read before you act</h2>
     <CalloutBox icon="book" label="Recommended reading" bg={C.goldPale} border={C.gold}>
-      <p style={{ margin: '0 0 8px' }}><strong>The New Topping Book</strong> and <strong>The New Bottoming Book</strong> <em>by Dossie Easton &amp; Janet Hardy</em> â Approachable, non-prescriptive, widely recommended. Start here. <A href="https://www.amazon.com/dp/1890159360">Amazon â</A></p>
-      <p style={{ margin: '0 0 8px' }}><strong>SM 101: A Realistic Introduction</strong> <em>by Jay Wiseman</em> â Detailed, safety-focused, practical. <A href="https://www.amazon.com/dp/0963976389">Amazon â</A></p>
-      <p style={{ margin: 0 }}><strong>Playing Well with Others</strong> <em>by Lee Harrington &amp; Mollena Williams</em> â Community, communication, navigating kink with other people. <A href="https://www.amazon.com/s?k=Playing+Well+with+Others+Harrington+Williams">Amazon â</A></p>
+      <p style={{ margin: '0 0 8px' }}><strong>The New Topping Book</strong> and <strong>The New Bottoming Book</strong> <em>by Dossie Easton &amp; Janet Hardy</em> — Approachable, non-prescriptive, widely recommended. Start here. <A href="https://www.amazon.com/dp/1890159360">Amazon →</A></p>
+      <p style={{ margin: '0 0 8px' }}><strong>SM 101: A Realistic Introduction</strong> <em>by Jay Wiseman</em> — Detailed, safety-focused, practical. <A href="https://www.amazon.com/dp/0963976389">Amazon →</A></p>
+      <p style={{ margin: 0 }}><strong>Playing Well with Others</strong> <em>by Lee Harrington &amp; Mollena Williams</em> — Community, communication, navigating kink with other people. <A href="https://www.amazon.com/s?k=Playing+Well+with+Others+Harrington+Williams">Amazon →</A></p>
     </CalloutBox>
   </section>
 )
 
-// âââ Section 6: With a partner ââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Section 6: With a partner ────────────────────────────────────────────────
 const S6 = () => (
   <section style={{ padding: '8px 16px 16px' }}>
     <SectionBanner id="s6" eyebrow="The next stage" title="When you're ready to involve someone else" />
     <CalloutBox label="Solo is complete in itself" bg={C.sagePale} border={C.sage}>
-      <p style={{ margin: 0 }}>If you're not in a relationship right now, or if partnered exploration isn't on your radar, that's completely fine. Everything in Sections 5 and 9 is fully valid on its own. This section is here when and if you want it â not because it's the natural endpoint.</p>
+      <p style={{ margin: 0 }}>If you're not in a relationship right now, or if partnered exploration isn't on your radar, that's completely fine. Everything in Sections 5 and 9 is fully valid on its own. This section is here when and if you want it — not because it's the natural endpoint.</p>
     </CalloutBox>
-    <p style={{ ...T.body, margin: '12px 0 16px' }}>Bringing kink into a relationship requires more explicit communication than most people are used to. That's not a drawback â it's exactly what makes it safe and actually good.</p>
+    <p style={{ ...T.body, margin: '12px 0 16px' }}>Bringing kink into a relationship requires more explicit communication than most people are used to. That's not a drawback — it's exactly what makes it safe and actually good.</p>
     {[
       ['Negotiate before, not during', 'Consent in kink is established before anything begins, when everyone is clear-headed. Discuss what\'s in bounds, what isn\'t, what the safeword is, what aftercare looks like. This happens outside the bedroom, with normal voices.'],
       ['Start small, on purpose', 'One new thing at a time. Introducing a single restraint element, or agreeing on one small role-play scenario, is very different from building an elaborate dynamic. Escalation should always be explicit.'],
       ['Use a safeword, always', 'Even for mild exploration. Non-negotiable. The traffic light system works: Red = stop, Yellow = slow down. Agree on it before you start.'],
-      ['Aftercare: don\'t skip it', 'Emotional and physical care following a scene. Both people need it â even the person who was \'in charge.\' Can be cuddling, water and snacks, quiet conversation. Discuss what each person needs before the scene.'],
-      ['Debrief later', 'Hours later, or the next day â a relaxed conversation about what worked and what didn\'t. This is how good experiences get repeated and problems get caught early.'],
+      ['Aftercare: don\'t skip it', 'Emotional and physical care following a scene. Both people need it — even the person who was \'in charge.\' Can be cuddling, water and snacks, quiet conversation. Discuss what each person needs before the scene.'],
+      ['Debrief later', 'Hours later, or the next day — a relaxed conversation about what worked and what didn\'t. This is how good experiences get repeated and problems get caught early.'],
     ].map(([t, b], i) => <StepCard key={t} num={i+1} title={t} body={b} />)}
     <CalloutBox icon="warn" label="A heads-up: Sub Drop and Dom Drop" bg={C.amberPale} border={C.amber}>
-      <p style={{ margin: '0 0 8px' }}><Term>Sub drop</Term> â a crash in mood, energy, or emotional regulation that can happen hours or days after an intense scene. Caused by the drop-off of adrenaline, dopamine, and oxytocin.</p>
-      <p style={{ margin: '0 0 8px' }}><Term>Dom drop</Term> â the same phenomenon for the person in the guiding role. Often overlooked. They aren't unaffected.</p>
+      <p style={{ margin: '0 0 8px' }}><Term>Sub drop</Term> — a crash in mood, energy, or emotional regulation that can happen hours or days after an intense scene. Caused by the drop-off of adrenaline, dopamine, and oxytocin.</p>
+      <p style={{ margin: '0 0 8px' }}><Term>Dom drop</Term> — the same phenomenon for the person in the guiding role. Often overlooked. They aren't unaffected.</p>
       <p style={{ margin: 0 }}>Both are completely normal. A follow-up check-in the next day is good practice when you're starting out.</p>
     </CalloutBox>
   </section>
 )
 
-// âââ Section 7: Kink vs abuse âââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Section 7: Kink vs abuse ─────────────────────────────────────────────────
 const S7 = () => (
   <section style={{ padding: '8px 16px 16px' }}>
     <SectionBanner id="s7" eyebrow="Knowing the line" title="Kink vs. abuse: the clear difference" />
     <CalloutBox icon="shield" label="The core distinction" bg={C.terraPale} border={C.terra}>
       <p style={{ margin: '0 0 8px' }}><strong>Kink:</strong> control is consensually given for a negotiated period, by someone with full power to withdraw it at any moment.</p>
       <p style={{ margin: '0 0 8px' }}><strong>Abuse:</strong> control is taken non-consensually, or consent is manufactured through pressure, manipulation, or coercion.</p>
-      <p style={{ margin: 0 }}>If your safeword is ignored â that is abuse. If your limits are pushed without agreement â that is abuse.</p>
+      <p style={{ margin: 0 }}>If your safeword is ignored — that is abuse. If your limits are pushed without agreement — that is abuse.</p>
     </CalloutBox>
     <h2 style={{ ...T.h2, color: C.terraDark }}>Red flags to watch for</h2>
     {[
@@ -382,22 +381,22 @@ const S7 = () => (
       'Continuing after a safeword is used',
     ].map(f => (
       <div key={f} style={{ display: 'flex', gap: 10, marginBottom: 8, alignItems: 'flex-start' }}>
-        <span style={{ color: C.terra, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>â¢</span>
+        <span style={{ color: C.terra, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>•</span>
         <p style={{ ...T.small, margin: 0 }}>{f}</p>
       </div>
     ))}
   </section>
 )
 
-// âââ Section 8: Community & resources ââââââââââââââââââââââââââââââââââââââââ
+// ─── Section 8: Community & resources ────────────────────────────────────────
 const S8 = () => (
   <section style={{ padding: '8px 16px 16px' }}>
     <SectionBanner id="s8" eyebrow="Next steps" title="Community & resources" />
     <p style={{ ...T.body, marginBottom: 16 }}>The single most useful thing you can do after reading this guide is walk into a physical space with knowledgeable people.</p>
 
-    <h2 style={T.h2}>Start local: B.O.I.N.K. â Holyoke, MA</h2>
-    <CalloutBox label={<>B.O.I.N.K. â 358 Dwight St, Holyoke, MA Â· <A href="https://boink-ed.com">boink-ed.com</A></>} bg={C.terraPale} border={C.terra}>
-      <p style={{ margin: '0 0 8px' }}>B.O.I.N.K. (Boundless Orgasms In Newfound Knowledge) is a sex-positive education studio and community space in Holyoke. Their explicit mission: "from vanilla to the most unique kinks â we are here for every side of everyone."</p>
+    <h2 style={T.h2}>Start local: B.O.I.N.K. — Holyoke, MA</h2>
+    <CalloutBox label={<>B.O.I.N.K. — 358 Dwight St, Holyoke, MA · <A href="https://boink-ed.com">boink-ed.com</A></>} bg={C.terraPale} border={C.terra}>
+      <p style={{ margin: '0 0 8px' }}>B.O.I.N.K. (Boundless Orgasms In Newfound Knowledge) is a sex-positive education studio and community space in Holyoke. Their explicit mission: "from vanilla to the most unique kinks — we are here for every side of everyone."</p>
       <p style={{ margin: 0 }}>LGBTQ-certified, welcoming to all ages and experience levels, specifically designed for curious beginners. You don't need to know anyone to walk in.</p>
     </CalloutBox>
 
@@ -411,78 +410,78 @@ const S8 = () => (
       { icon: 'microphone', title: 'Backdoor BOINK Podcast',              href: null,                               body: "BOINK's podcast covers kink education, community topics, and real conversations about sexuality. Search on Spotify.", bg: C.sagePale, border: C.sage },
       { icon: 'book',       title: 'On-Demand Classes',                   href: 'https://boink-ed.com/ondemand',    body: "BOINK offers on-demand educational videos you can watch at home, privately. A natural bridge between reading this guide and attending in person.", bg: C.sagePale, border: C.sage },
     ].map(({ href, title, ...rest }) => (
-      <IconCard key={title} title={href ? <A href={href}>{title} â</A> : title} {...rest} />
+      <IconCard key={title} title={href ? <A href={href}>{title} →</A> : title} {...rest} />
     ))}
 
     <h2 style={T.h2}>Online communities</h2>
-    <IconCard icon="globe"  bg={C.sagePale} border={C.sage} title={<A href="https://fetlife.com">FetLife â</A>} body="The largest kink social network. Not a hook-up site â primarily educational groups, event listings, and community discussion. Search for Western MA groups." />
-    <IconCard icon="bubble" bg={C.sagePale} border={C.sage} title={<A href="https://reddit.com/r/BDSMAdvice">r/BDSMAdvice â</A>} body="A moderated Reddit community with a high signal-to-noise ratio. Good for specific beginner questions in an anonymous format." />
-    <IconCard icon="book"   bg={C.sagePale} border={C.sage} title={<A href="https://kinkly.com">Kinkly.com â</A>} body="Extensive glossary and educational articles, well-organized for beginners. Useful reference alongside this guide." />
+    <IconCard icon="globe"  bg={C.sagePale} border={C.sage} title={<A href="https://fetlife.com">FetLife →</A>} body="The largest kink social network. Not a hook-up site — primarily educational groups, event listings, and community discussion. Search for Western MA groups." />
+    <IconCard icon="bubble" bg={C.sagePale} border={C.sage} title={<A href="https://reddit.com/r/BDSMAdvice">r/BDSMAdvice →</A>} body="A moderated Reddit community with a high signal-to-noise ratio. Good for specific beginner questions in an anonymous format." />
+    <IconCard icon="book"   bg={C.sagePale} border={C.sage} title={<A href="https://kinkly.com">Kinkly.com →</A>} body="Extensive glossary and educational articles, well-organized for beginners. Useful reference alongside this guide." />
 
     <h2 style={T.h2}>Beginner-friendly podcasts</h2>
     <p style={{ ...T.small, marginBottom: 12 }}>Good for commutes, walks, or any time you want to absorb material privately.</p>
-    <IconCard icon="microphone" bg={C.sagePale} border={C.sage} title={<A href="https://tinahorn.net/yapit">Why Are People Into That?! â</A>} body="Journalist Tina Horn interviews practitioners about specific kinks in a curious, non-judgmental format. Each episode unpacks one topic from scratch." />
-    <IconCard icon="microphone" bg={C.terraPale} border={C.terra} title={<A href="https://americansexpodcast.com">American Sex Podcast â</A>} body="AASECT award-winning podcast hosted by certified sex educator Sunny Megatron. Strong on consent frameworks and communication." />
-    <IconCard icon="microphone" bg={C.sagePale} border={C.sage} title={<A href="https://savage.love/lovecast/">Savage Lovecast â</A>} body="Long-running advice podcast covering the full range of human sexuality including kink and BDSM. Free on Spotify and Apple Podcasts." />
+    <IconCard icon="microphone" bg={C.sagePale} border={C.sage} title={<A href="https://tinahorn.net/yapit">Why Are People Into That?! →</A>} body="Journalist Tina Horn interviews practitioners about specific kinks in a curious, non-judgmental format. Each episode unpacks one topic from scratch." />
+    <IconCard icon="microphone" bg={C.terraPale} border={C.terra} title={<A href="https://americansexpodcast.com">American Sex Podcast →</A>} body="AASECT award-winning podcast hosted by certified sex educator Sunny Megatron. Strong on consent frameworks and communication." />
+    <IconCard icon="microphone" bg={C.sagePale} border={C.sage} title={<A href="https://savage.love/lovecast/">Savage Lovecast →</A>} body="Long-running advice podcast covering the full range of human sexuality including kink and BDSM. Free on Spotify and Apple Podcasts." />
 
     <h2 style={T.h2}>Professional support</h2>
-    <p style={{ ...T.small, marginBottom: 12 }}>If exploring kink brings up unexpected emotional content â shame, confusion, past experiences â kink-aware therapists are available and genuinely helpful. BOINK also offers one-on-one intimacy coaching (<A href="https://boink-ed.com/services">boink-ed.com/services</A>).</p>
-    <IconCard icon="person" bg={C.sagePale} border={C.sage} title={<A href="https://www.aasect.org/referral-directory">AASECT Referral Directory â</A>} body="Certified sexuality educators, counselors, and therapists, searchable by location." />
-    <IconCard icon="person" bg={C.sagePale} border={C.sage} title={<A href="https://www.kapprofessionals.org">Kink Aware Professionals (KAP) â</A>} body="NCSF-maintained directory of therapists, medical professionals, and legal professionals." />
+    <p style={{ ...T.small, marginBottom: 12 }}>If exploring kink brings up unexpected emotional content — shame, confusion, past experiences — kink-aware therapists are available and genuinely helpful. BOINK also offers one-on-one intimacy coaching (<A href="https://boink-ed.com/services">boink-ed.com/services</A>).</p>
+    <IconCard icon="person" bg={C.sagePale} border={C.sage} title={<A href="https://www.aasect.org/referral-directory">AASECT Referral Directory →</A>} body="Certified sexuality educators, counselors, and therapists, searchable by location." />
+    <IconCard icon="person" bg={C.sagePale} border={C.sage} title={<A href="https://www.kapprofessionals.org">Kink Aware Professionals (KAP) →</A>} body="NCSF-maintained directory of therapists, medical professionals, and legal professionals." />
   </section>
 )
 
-// âââ Section 9: Starting path âââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Section 9: Starting path ─────────────────────────────────────────────────
 const S9 = () => (
   <section style={{ padding: '8px 16px 16px' }}>
     <SectionBanner id="s9" eyebrow="Your first steps" title="A suggested starting path" />
-    <p style={{ ...T.body, marginBottom: 16 }}>Steps 1â5 are entirely solo. Steps 6â7 only apply when you're ready to involve someone else. There's no timeline, and no requirement to reach the end.</p>
-    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.sage, margin: '0 0 10px' }}>SOLO PHASE â steps 1 to 5</p>
-    <StepCard num={1} title="Do the Yes / No / Maybe list" body="No audience, no pressure. Just you and a document. Be honest â nobody will see it. Search for free templates online; aim for a list with at least 50 items." />
-    <StepCard num={2} title="Read at least one book" body="Before anything else. Start with The New Bottoming Book or The New Topping Book â whichever direction feels more natural to you." />
+    <p style={{ ...T.body, marginBottom: 16 }}>Steps 1–5 are entirely solo. Steps 6–7 only apply when you're ready to involve someone else. There's no timeline, and no requirement to reach the end.</p>
+    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.sage, margin: '0 0 10px' }}>SOLO PHASE — steps 1 to 5</p>
+    <StepCard num={1} title="Do the Yes / No / Maybe list" body="No audience, no pressure. Just you and a document. Be honest — nobody will see it. Search for free templates online; aim for a list with at least 50 items." />
+    <StepCard num={2} title="Read at least one book" body="Before anything else. Start with The New Bottoming Book or The New Topping Book — whichever direction feels more natural to you." />
     <StepCard num={3} title="Try solo sensation experiments" body="Ice, a blindfold, texture contrast, stillness. The goal is to understand your own physical response before anyone else is involved. See Section 5." />
-    <StepCard num={4} title="Write or record a private fantasy" body="Articulating something â even just for yourself â clarifies what the actual draw is. Not a commitment, not a plan. Just information." />
+    <StepCard num={4} title="Write or record a private fantasy" body="Articulating something — even just for yourself — clarifies what the actual draw is. Not a commitment, not a plan. Just information." />
     <StepCard num={5} title="Browse community discussions" body="Read r/BDSMAdvice or FetLife groups without posting. Learn the vocabulary and how people actually talk about these things." />
-    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.terra, margin: '16px 0 10px' }}>WHEN YOU'RE READY â steps 6 and 7</p>
+    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.terra, margin: '16px 0 10px' }}>WHEN YOU'RE READY — steps 6 and 7</p>
     <StepCard num={6} title="Have the conversation before any scene" body="Outside the bedroom, with normal voices. What do you each want to try? What are your limits? What's the safeword? What does aftercare look like?" />
-    <StepCard num={7} title="Debrief afterward â then check in again the next day" body="What worked? What didn't? Sub drop and dom drop can arrive hours later â a follow-up check-in is good practice every time when you're starting out." />
+    <StepCard num={7} title="Debrief afterward — then check in again the next day" body="What worked? What didn't? Sub drop and dom drop can arrive hours later — a follow-up check-in is good practice every time when you're starting out." />
     <CalloutBox label="If unexpected emotions come up at any stage" bg={C.sagePale} border={C.sage}>
       <p style={{ margin: 0 }}>That's normal, and it doesn't mean something went wrong. A kink-aware therapist from the AASECT or KAP directory is a legitimate resource, not an overreaction.</p>
     </CalloutBox>
     <BreatheBox
       quote="There's no destination here. Curiosity is the whole point."
-      sub="You're not trying to arrive anywhere. Just understand yourself more honestly â and if you choose to share that with someone, do it safely and well."
+      sub="You're not trying to arrive anywhere. Just understand yourself more honestly — and if you choose to share that with someone, do it safely and well."
     />
   </section>
 )
 
-// âââ Section 10: Glossary âââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Section 10: Glossary ─────────────────────────────────────────────────────
 const GLOSSARY = [
   ['Aftercare', 'Emotional and physical care provided to all participants after a kink scene. Can include cuddling, water and snacks, quiet conversation, or simply being present together.'],
   ['BDSM', "An acronym for Bondage/Discipline, Dominance/Submission, and Sadism/Masochism. The most common cluster of kink activities."],
-  ['Bottom', 'The person in the receptive or following role in a scene. Not necessarily permanent â many people switch roles.'],
+  ['Bottom', 'The person in the receptive or following role in a scene. Not necessarily permanent — many people switch roles.'],
   ['Bondage', 'Physical restraint as part of consensual play. Safety: never leave a restrained person alone; always have safety scissors within reach.'],
-  ['Dominant (Dom / Domme)', 'The partner taking the active, guiding role in a scene. Not superior to the Submissive â just occupying a different role within a negotiated framework.'],
+  ['Dominant (Dom / Domme)', 'The partner taking the active, guiding role in a scene. Not superior to the Submissive — just occupying a different role within a negotiated framework.'],
   ['Dom Drop', 'A crash in mood or emotional regulation experienced by the Dominant/Top after an intense scene. Treated the same way as Sub Drop.'],
   ['Hard Limit', 'An absolute, non-negotiable boundary. A hard limit is never pushed, argued with, or tested.'],
-  ['Impact Play', 'Consensual striking â spanking, paddling, flogging, caning. Requires knowledge of safe and unsafe zones on the body.'],
+  ['Impact Play', 'Consensual striking — spanking, paddling, flogging, caning. Requires knowledge of safe and unsafe zones on the body.'],
   ['Kink', 'An umbrella term for sexual interests, practices, and fantasies outside conventional norms. BDSM is the most common subset.'],
   ['Munch', 'A casual, non-sexual social gathering for kink-curious and kink-identified people. The standard first step for in-person community.'],
-  ['Negotiation', 'The explicit conversation that happens before any kink activity â covering limits, safewords, and aftercare. Non-optional.'],
+  ['Negotiation', 'The explicit conversation that happens before any kink activity — covering limits, safewords, and aftercare. Non-optional.'],
   ['PRICK', 'Personal Responsibility, Informed Consensual Kink. A consent framework emphasizing individual ownership of research, limits, and safety.'],
   ['RACK', "Risk-Aware Consensual Kink. Acknowledges that some kink carries inherent risk, emphasizing informed agreement rather than assuming all risk can be eliminated."],
   ['Role-play', 'Acting out characters, scenarios, or power dynamics. Can be purely verbal, costumed, or elaborately staged.'],
   ['Safeword', 'A pre-agreed word or signal that immediately stops all play. Must be agreed upon before any scene begins.'],
   ['Scene', 'A defined play session with a beginning, middle, and end.'],
-  ['Sensation Play', 'Kink activity centered on exploring physical sensation â temperature, texture, pressure. Highly accessible.'],
+  ['Sensation Play', 'Kink activity centered on exploring physical sensation — temperature, texture, pressure. Highly accessible.'],
   ['Shibari', 'A Japanese rope bondage tradition emphasizing aesthetics, trust, and connection as much as restraint. Requires dedicated study to practice safely.'],
-  ['Soft Limit', "A boundary that isn't absolute â something a person hesitates about but might consider under the right conditions."],
+  ['Soft Limit', "A boundary that isn't absolute — something a person hesitates about but might consider under the right conditions."],
   ['SSC', 'Safe, Sane, and Consensual. All activity should be physically and emotionally safe, done with a clear mind, and fully agreed upon.'],
   ['Sub Drop', 'A crash in mood, energy, or emotional regulation after an intense scene. Caused by the drop-off of adrenaline, dopamine, and oxytocin.'],
-  ['Submissive (Sub)', 'The partner in the receptive or following role. Holds genuine power â including the power to stop the scene at any moment.'],
+  ['Submissive (Sub)', 'The partner in the receptive or following role. Holds genuine power — including the power to stop the scene at any moment.'],
   ['Switch', 'Someone who moves between Dominant/Top and Submissive/Bottom roles across different partners or scenes.'],
   ['Top', 'The partner in the active or giving role in a scene. Can be Dominant by temperament, or simply the person executing a technique.'],
-  ['Vanilla', 'Conventional, non-kinky sexual activity. Not an insult â just a descriptor for the other end of the spectrum.'],
+  ['Vanilla', 'Conventional, non-kinky sexual activity. Not an insult — just a descriptor for the other end of the spectrum.'],
   ['Yes / No / Maybe List', 'A self-reflection tool: a long list of kink activities rated privately. Many free templates available online.'],
 ]
 
@@ -496,7 +495,7 @@ const S10 = () => {
       <input
         value={q}
         onChange={e => setQ(e.target.value)}
-        placeholder="Search termsâ¦"
+        placeholder="Search terms…"
         style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: `1px solid ${C.sagePale}`, background: C.white, fontSize: 15, color: C.ink, boxSizing: 'border-box', marginBottom: 14, outline: 'none' }}
       />
       {filtered.map(([term, def]) => (
@@ -510,12 +509,12 @@ const S10 = () => {
   )
 }
 
-// âââ Section 11: Further Resources âââââââââââââââââââââââââââââââââââââââââââ
+// ─── Section 11: Further Resources ───────────────────────────────────────────
 const S11 = () => (
   <section style={{ padding: '8px 16px 28px' }}>
     <SectionBanner id="s11" eyebrow="Reference" title="Further Resources" />
     {[
-      { heading: 'Local â Western Massachusetts', items: [
+      { heading: 'Local — Western Massachusetts', items: [
         { name: 'B.O.I.N.K.', sub: '358 Dwight St, Holyoke, MA', href: 'https://boink-ed.com', desc: 'Sex-positive education studio. Workshops, classes, munches, coaching, on-demand content. Beginner-welcoming, LGBTQ-certified. Check boink-ed.com/event for current schedule.' },
         { name: 'Backdoor BOINK Podcast', sub: 'Search on Spotify', href: null, desc: "BOINK's podcast covering kink education and community topics." },
         { name: 'BOINK On-Demand Classes', sub: 'boink-ed.com/ondemand', href: 'https://boink-ed.com/ondemand', desc: 'Study-at-home video classes. A private, self-paced bridge between reading and attending in person.' },
@@ -525,20 +524,20 @@ const S11 = () => (
         { name: 'The New Bottoming Book', sub: 'Dossie Easton & Janet Hardy', href: 'https://www.amazon.com/dp/1890159352', desc: 'Companion volume covering the receptive role. Read both regardless of your inclination.' },
         { name: 'SM 101: A Realistic Introduction', sub: 'Jay Wiseman', href: 'https://www.amazon.com/dp/0963976389', desc: 'Safety-focused, practical, and detailed. Covers physical techniques and risk management.' },
         { name: 'Playing Well with Others', sub: 'Lee Harrington & Mollena Williams', href: 'https://www.amazon.com/s?k=Playing+Well+with+Others+Harrington+Williams', desc: 'Community navigation, communication, and building healthy kink relationships.' },
-        { name: 'The Ultimate Guide to Kink', sub: 'Tristan Taormino (ed.)', href: 'https://www.amazon.com/s?k=Ultimate+Guide+to+Kink+Taormino', desc: 'Multi-contributor anthology â specific practices covered in depth by practitioners.' },
+        { name: 'The Ultimate Guide to Kink', sub: 'Tristan Taormino (ed.)', href: 'https://www.amazon.com/s?k=Ultimate+Guide+to+Kink+Taormino', desc: 'Multi-contributor anthology — specific practices covered in depth by practitioners.' },
         { name: 'When Someone You Love Is Kinky', sub: 'Dossie Easton & Catherine Liszt', href: 'https://www.amazon.com/s?k=When+Someone+You+Love+Is+Kinky+Easton', desc: 'For partners and family members trying to understand a kinky person in their life.' },
       ]},
       { heading: 'Online Communities', items: [
         { name: 'FetLife', sub: 'fetlife.com', href: 'https://fetlife.com', desc: 'The largest kink social network. Browse community groups and local Western MA event listings.' },
         { name: 'r/BDSMAdvice', sub: 'reddit.com/r/BDSMAdvice', href: 'https://reddit.com/r/BDSMAdvice', desc: 'Moderated and beginner-friendly. Good for specific questions.' },
-        { name: 'Kinkly Glossary', sub: 'kinkly.com', href: 'https://kinkly.com', desc: 'Extensive A-Z dictionary of kink terms â useful reference alongside this guide.' },
+        { name: 'Kinkly Glossary', sub: 'kinkly.com', href: 'https://kinkly.com', desc: 'Extensive A-Z dictionary of kink terms — useful reference alongside this guide.' },
         { name: 'NCSF', sub: 'ncsfreedom.org', href: 'https://ncsfreedom.org', desc: 'National Coalition for Sexual Freedom. Advocacy, legal resources, community support.' },
       ]},
       { heading: 'Podcasts', items: [
         { name: 'Why Are People Into That?!', sub: 'Hosted by Tina Horn', href: 'https://tinahorn.net/yapit', desc: 'Journalist Tina Horn interviews practitioners in depth. Curious, non-judgmental. Spotify, Apple Podcasts, all major platforms.' },
         { name: 'American Sex Podcast', sub: 'Hosted by Sunny Megatron', href: 'https://americansexpodcast.com', desc: 'AASECT award-winning podcast. Strong on consent, communication, and BDSM education.' },
         { name: 'Savage Lovecast', sub: 'Hosted by Dan Savage', href: 'https://savage.love/lovecast/', desc: 'Long-running advice podcast. Free episodes on Spotify and Apple Podcasts; extended version at savage.love.' },
-        { name: 'Backdoor BOINK', sub: "BOINK's podcast â search on Spotify", href: null, desc: 'Local Western MA podcast from the BOINK studio team. Good before your first in-person visit.' },
+        { name: 'Backdoor BOINK', sub: "BOINK's podcast — search on Spotify", href: null, desc: 'Local Western MA podcast from the BOINK studio team. Good before your first in-person visit.' },
       ]},
       { heading: 'Professional Support', items: [
         { name: 'AASECT Referral Directory', sub: 'aasect.org/referral-directory', href: 'https://www.aasect.org/referral-directory', desc: 'Find certified sexuality educators, counselors, and therapists by location.' },
@@ -559,12 +558,12 @@ const S11 = () => (
     ))}
     <div style={{ borderTop: `1px solid ${C.sagePale}`, paddingTop: 16, marginTop: 8, textAlign: 'center' }}>
       <p style={{ fontSize: 13, fontStyle: 'italic', color: C.inkMid, margin: '0 0 4px', lineHeight: 1.5 }}>This guide was prepared as an educational overview for curious adults. It does not constitute professional therapeutic or medical advice.</p>
-      <p style={{ fontSize: 12, color: C.inkSoft, margin: 0 }}>V008 Â· 20260327 Â· Web edition</p>
+      <p style={{ fontSize: 12, color: C.inkSoft, margin: 0 }}>V008 · 20260327 · Web edition</p>
     </div>
   </section>
 )
 
-// âââ Main export ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Main export ──────────────────────────────────────────────────────────────
 export default function KinkGuide() {
   return (
     <div style={{ background: C.bg, minHeight: '100vh', maxWidth: 640, margin: '0 auto', fontFamily: 'system-ui, -apple-system, sans-serif', color: C.ink }}>
