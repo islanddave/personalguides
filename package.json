@@ -1,5 +1,6 @@
 {
   "name": "personal-guides",
+  "description": "Personal reference guides — deployed via Netlify",
   "private": true,
   "version": "1.0.0",
   "type": "module",
