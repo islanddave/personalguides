@@ -1,0 +1,1 @@
+export default function JenEnvSetup(){return <div style={{fontFamily:'sans-serif',padding:40,color:'#333'}}><h2>Jen Cowork Setup Guide</h2><p>Coming soon — building in S7.</p></div>}
