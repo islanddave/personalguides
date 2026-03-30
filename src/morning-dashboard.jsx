@@ -197,7 +197,7 @@ function CalendarSection() {
       </div>
       <div style={sectionBody}>
         {calEvents.length === 0 ? (
-          <div style={{ fontFamily: F.body, fontSize: 14, color: C.inkSoft, padding: "8px 0" }}>Nothing on the calendar today. A good day to catch up or Irest.</div>
+          <div style={{ fontFamily: F.body, fontSize: 14, color: C.inkSoft, padding: "8px 0" }}>Nothing on the calendar today. A good day to catch up or lest.</div>
         ) : calEvents.map((ev, i) => (
           <div key={ev.id} style={{ marginBottom: i < calEvents.length - 1 ? 12 : 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -237,7 +237,7 @@ function SystemsSection() {
     <div style={sectionCard}>
       <div style={sectionHeader}>
         <div style={{ display: "flex", alignItems: "center" }}>
-          <StatusDot status={SYSTEMS_STATU} />
+          <StatusDot status={SYSTEMS_STATUS} />
           <span style={sectionLabel}>Systems</span>
         </div>
         <span style={{ fontFamily: F.mono, fontSize: 12, color: C.inkSoft }}>{ERROR_COUNT_24H} / 24h · {ERROR_COUNT_7D} / 7d</span>
