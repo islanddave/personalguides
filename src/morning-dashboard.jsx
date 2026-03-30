@@ -5,139 +5,180 @@ import { useState } from "react";
 // ═══════════════════════════════════════════════════════════════════════════
 
 const BRIEFING_DATE = "Monday, Mar 30";
-const BRIEFING_TIME = "10:21a";
-const GREETING = "Good morning, Dave.";
+const BRIEFING_TIME = "4:24p";
+const GREETING = "Good afternoon, Dave.";
 
-const CAL_SUMMARY = "2 events today";
-const calEvents = [
-  {
-    id: 1, time: "12:00p", end: "1:00p", dur: "1h",
-    title: "Kate in \u{1F1FA}\u{1F1E6} — need Dave's Zoom", color: "#42d692",
-    prep: "Kate is calling from Ukraine. Open Zoom before noon and keep the link ready for her.",
-    allDay: false,
-  },
-  {
-    id: 2, time: "9:00p", end: "9:45p", dur: "45m",
-    title: "Jen therapy", color: "#7986CB",
-    prep: "Quiet the house by 8:55p. No interruptions during session.",
-    allDay: false,
-  },
-];
+const CAL_SUMMARY = "Clear day · clear week";
+const calEvents = [];
 const IS_MONDAY = true;
 const weekShape = [
-  { day: "Mon", count: 2, flag: "busy" },
-  { day: "Tue", count: 1, flag: "" },
-  { day: "Wed", count: 1, flag: "" },
+  { day: "Mon", count: 0, flag: "light" },
+  { day: "Tue", count: 0, flag: "light" },
+  { day: "Wed", count: 0, flag: "light" },
   { day: "Thu", count: 0, flag: "light" },
-  { day: "Fri", count: 1, flag: "" },
-  { day: "Sat", count: 2, flag: "busy" },
-  { day: "Sun", count: 2, flag: "busy" },
+  { day: "Fri", count: 0, flag: "light" },
+  { day: "Sat", count: 0, flag: "light" },
+  { day: "Sun", count: 0, flag: "light" },
 ];
 
 const SYSTEMS_STATUS = "amber";
-const SYSTEMS_SUMMARY = "env-assumption systemic: 5 of 12 errors (7d). Vault task can't run local scripts — launchd fix needed. Tool scope mismatch persists.";
-const ERROR_COUNT_24H = 2;
-const ERROR_COUNT_7D = 12;
+const SYSTEMS_SUMMARY = "env-assumption systemic — 7 instances, 39% of all errors. 7 new today (5 after morning review). Tool-scope mismatch is the dominant root cause across sessions.";
+const ERROR_COUNT_24H = 7;
+const ERROR_COUNT_7D = 17;
 const PRIORITY_ACTION = {
   title: "Add tool-scope quick-ref to CLAUDE.md",
-  fix: "5-bullet map: mcp__filesystem→user FS, Read/Write/Edit→sandbox, bash→sandbox, WebFetch→GET only, Chrome JS→outbound HTTP. L-006 at conf 0.6.",
-  impact: "Eliminates ~40% of all errors across 7-day window"
+  fix: "5-bullet map: mcp→user FS only · Read/Write/Edit→sandbox only · bash→sandbox, no local scripts · WebFetch→GET-only · Chrome JS→outbound HTTP, no local files",
+  impact: "Eliminates root cause for ~40% of all errors logged since system inception (7 of 17)",
 };
 const errorTrends = [
-  { label: "env-assumption", count7d: 5, direction: "up" },
-  { label: "wrong-tool/syntax", count7d: 4, direction: "up" },
-  { label: "unnecessary-step", count7d: 1, direction: "flat" },
+  { label: "env-assumption", count7d: 7, direction: "up" },
+  { label: "stale-knowledge", count7d: 2, direction: "up" },
+  { label: "tool-limitation", count7d: 1, direction: "flat" },
 ];
 
 const TIPS_LABEL = "10 tips scored";
 const tips = [
   {
-    id: 1, score: 96, category: "Finance",
-    headline: "Treasury Ladder — April Maturity Is This Week",
-    detail: "The only growth vector with a hard external deadline. Even 15 minutes of research today prevents a lapsed decision worth real money. Day 5 of the 90-day consulting clock — this is the one item that can't wait. T-bill or CD rolling into nothing is a real cost.",
-    action: "Research rollover options for April maturity dates — 15 min max",
-    sessionPrompt: "Help me review the Treasury Ladder situation. April maturity is this week. What are my rollover options and what should I know before deciding?",
+    id: 1, score: 93, category: "Infrastructure",
+    headline: "Chrome JS → Apps Script: always use Content-Type: text/plain",
+    detail: "ritchie-001 confirmed: application/json triggers a CORS preflight that Apps Script doesn't handle from arbitrary origins. text/plain is a 'simple request' per the CORS spec — no preflight sent. Apps Script receives the body via e.postData.contents and JSON.parse works regardless of content-type. This is now a confirmed platform pattern embedded in every relay-using session. The savings: 2 failed fetches vs. zero when the pattern is applied upfront.",
+    action: "For all Chrome JS → Apps Script POSTs: set headers: {'Content-Type': 'text/plain'}, body: JSON.stringify(payload)",
+    sessionPrompt: "I need to POST data from Chrome JS to my Google Apps Script relay. Show me the correct fetch call pattern that avoids CORS preflight issues.",
   },
   {
-    id: 2, score: 93, category: "Errors",
-    headline: "env-assumption Is Now Systemic — Act On It",
-    detail: "5 instances in 7 days, 35+ minutes burned. Core mitigation: before designing any protocol, verify platform capabilities. Vault task failure today is the 5th instance. L-006 is ready for promotion at conf 0.6 — this isn't provisional anymore.",
-    action: "Add 5-bullet tool-scope map to CLAUDE.md — 10 minutes",
-    sessionPrompt: "I need to add a tool-scope quick reference to CLAUDE.md to fix the env-assumption error pattern. Help me draft it: mcp__filesystem scope, Read/Write/Edit scope, bash scope, WebFetch limits, Chrome JS scope.",
+    id: 2, score: 91, category: "Tools",
+    headline: "Check tab URL before javascript_tool — chrome:// pages silently fail",
+    detail: "ritchie-002 confirmed: javascript_tool returns 'Browser URL could not be parsed' on chrome://newtab/ and any internal browser URL. Chrome extension content scripts are blocked on privileged pages by browser security policy. After tabs_context_mcp, always verify the tab URL starts with http:// or https:// before calling javascript_tool. Any real HTTPS URL works — drive.google.com is a safe default. This is the most common single-cause of 'why won't my JS run' confusion.",
+    action: "After tabs_context_mcp: if tab URL contains chrome:// or about:, navigate to https://drive.google.com before any javascript_tool call",
+    sessionPrompt: "Walk me through the correct sequence for getting a Chrome tab ready for javascript_tool calls, including what to check before executing any JS.",
   },
   {
-    id: 3, score: 91, category: "Strategy",
-    headline: "Clear Monday + Clear Week = Growth Vector Day",
-    detail: "Zero calendar events all week except Zoom support and Jen's therapy. Day 5 of the 90-day consulting clock with zero revenue-facing sessions. The tooling is mature enough — infrastructure sprint has run its course. Pick ONE growth vector today.",
-    action: "Open a session focused on employment contract review OR portfolio creation",
-    sessionPrompt: "I want to make progress on my employment contract review today. Help me understand what I need to prepare and what the key decisions are.",
+    id: 3, score: 89, category: "Infrastructure",
+    headline: "window._c* vars don't survive context boundaries — always re-load all chunks",
+    detail: "dirac-001 proved: reusing window vars from a prior context window produced 1-char base64 corruption that passed the length check (7000 chars) but decoded to broken JSX. The GitHub PUT returned 200 and the commit succeeded — but the page threw a ReferenceError on load. Length checks are necessary but not sufficient for b64 integrity. The only safe pattern: re-run Python chunk generation and re-load ALL chunk files via mcp__filesystem__read_file on every deploy attempt, even if prior chunks look correct.",
+    action: "Before every deploy: re-run python chunk script, re-load ALL chunk files from disk — never skip any chunk re-load",
+    sessionPrompt: "Explain the b64 chunk pipeline for deploying JSX files to GitHub via Chrome JS. What are the failure modes I need to guard against, and what's the correct procedure?",
   },
   {
-    id: 4, score: 88, category: "Infrastructure",
-    headline: "Vault Backup Needs launchd, Not Scheduled Tasks",
-    detail: "Today's vault-sync failure (E-vigilant-sweet-mccarthy-001) confirmed: scheduled tasks run in a Linux sandbox with no access to /Users/davenichols. vault-backup.py needs a launchd plist — same 15-minute setup as the compression guard watcher.",
-    action: "Set up launchd plist for vault-backup.py in Terminal (15 min)",
-    sessionPrompt: "Help me set up a launchd plist to run vault-backup.py daily. I have a launchd watcher for compression guard — use the same pattern.",
+    id: 4, score: 87, category: "Workflow",
+    headline: "Jen-config is 3 bounded sessions from completion",
+    detail: "S1 (handoff + family-calendar skills), S2 (CLAUDE.md template + prefs), S3 (learning files), and S5 (claude-md-backup proc) are complete and live on Drive. S4 (skills packaging), S6 (scheduled task procs), and S7 (tips/onboarding) are the remaining sessions. Each is bounded and autonomous-safe — no decisions required from Dave mid-session. A clear week is a good window to close these. Jen gets a functional environment; you clear one active thread from the auto-pickup queue.",
+    action: "Say 'pickup jen config s3 s5 complete' to load the thread and start S4 (skills packaging)",
+    sessionPrompt: "pickup jen config s3 s5 complete",
   },
   {
-    id: 5, score: 86, category: "Quality",
-    headline: "Paste Schemas in Agent Prompts — Don't Describe Them",
-    detail: "E-great-brave-brown errors showed agents inferring wrong key names from prose descriptions. 3 of 5 bugs were preventable by pasting the actual JSON schema. When dispatching agents for structured data work, paste the schema directly — saves 2-3 correction cycles.",
-    action: "Next agent dispatch: include the target file's actual schema as literal JSON",
-    sessionPrompt: "Show me how to structure agent dispatch prompts for tasks involving structured data to avoid schema inference errors.",
+    id: 5, score: 85, category: "Workflow",
+    headline: "5 active threads are slowing auto-pickup — triage 2 today",
+    detail: "Active threads: skill-system-gap-review, filename-convention-update, jen-config-s3-s5-complete, finance-freedom-number, and cal-skill-MVP-refinement. Auto-pickup scans all active threads at every session start — the more active threads, the more ambiguous the pickup signal. filename-convention-update (summary suggests a single CLAUDE.md edit was the output) and cal-skill-MVP-refinement (loaded, not active — the preview pipeline blocker may still be unresolved) are likely candidates to close or park.",
+    action: "Open handoff index, read summaries for 'filename-convention-update' and 'cal-skill-MVP-refinement', decide: close or park each",
+    sessionPrompt: "threads — show me all active handoff threads. I want to triage which ones to close, park, or continue today.",
   },
   {
-    id: 6, score: 83, category: "Workflow",
-    headline: "Two Active Threads Need Triage Today",
-    detail: "dispatch-stress-test (zen-admiring-dijkstra) is active, bootstrap layered defense (serene-sweet-feynman) is loaded. Both need a decision. Stale active threads slow auto-pickup for every new session — 2 threads means 2 index scans before every response.",
-    action: "Say 'threads' to review and triage active handoffs",
-    sessionPrompt: "threads",
+    id: 6, score: 83, category: "Quality",
+    headline: "Error logging at 25% compliance — log at the pivot, not at session end",
+    detail: "The compliance gap is a timing problem, not a discipline problem. 'At session end' competes with everything winding down — the entry gets skipped. The pattern that actually works: when approach A fails and you shift to approach B, that transition is the exact moment to log. The error is fresh, the contrast is clear, and the entry takes 2 minutes. 17 errors in 7 days with ~25 sessions means most sessions still produce zero entries. Closing the gap to even 50% compliance would double the data density for pattern detection.",
+    action: "At every approach pivot: write the error entry immediately (category + recovery + avoidable?) before continuing to approach B",
+    sessionPrompt: "Help me write an error log entry for a failure that just happened in my session. Walk me through the schema: task context, domain, approach tried, failure, recovery, root cause, category, avoidable, wasted effort.",
   },
   {
     id: 7, score: 80, category: "Quality",
-    headline: "CQR Data Ready for First Pattern Extraction",
-    detail: "9 entries across 4 days. Compliance sessions (78) vs build sessions (~93 avg) is a real signal: meta-operational work has a CQR penalty. First pattern extraction can produce 1-2 promotable lessons from evidence already in the log.",
-    action: "Promote compliance/build CQR gap to lessons.md this session",
-    sessionPrompt: "Review my cqr-log.md and help me extract patterns. I want to promote at least one new lesson based on the compliance vs build session gap.",
+    headline: "CQR step > session rating gap (~5 pts) is information — track it deliberately",
+    detail: "From the log: step ratings average ~92 (individual artifact quality is high) while session ratings average ~87 (session-level goal completion is lower). A consistent 5-point gap suggests sessions regularly end before all goals are addressed — either scope is too large or goal-setting is too ambitious. Tracking the gap deliberately for 5 sessions would reveal whether this is a scoping problem or a completion problem, and what to adjust.",
+    action: "For the next 5 sessions: explicitly note the step vs. session gap in the CQR entry and add a one-line hypothesis for why the gap exists",
+    sessionPrompt: "Review my CQR log at /Users/davenichols/AI/Claude/learning/cqr-log.md and analyze the gap between step ratings and session ratings. Is there a pattern by session type?",
   },
   {
-    id: 8, score: 78, category: "Strategy",
-    headline: "Day 5: Builder Bias Persists",
-    detail: "Every session since baseline = infrastructure. Vault, dispatch, dashboard, CQR, bootstrap — all sophisticated, all internal. Sophistication ≠ progress toward $2.98M freedom number. The minimum viable consulting artifact is still undefined. What could exist by Friday?",
-    action: "Name one consulting artifact that could exist by Friday",
-    sessionPrompt: "Help me identify the minimum viable consulting artifact I could create this week — proposal, case study, LinkedIn post, or something else. I need to break out of infrastructure-only mode.",
+    id: 8, score: 78, category: "Finance",
+    headline: "Treasury ladder April maturity — decision window is days, not weeks",
+    detail: "April T-bill maturity is arriving this week. The decision has three branches: reinvest in short-duration T-bills, extend the ladder to a longer duration, or redirect to equities given the current rate environment. With a clear week and no calendar pressure, a 15-minute research session can frame the decision with current rates. Every day of non-decision is a small cost: cash sitting between maturities earns nothing. This is the only growth vector with a hard external deadline.",
+    action: "Open a fresh session and research current 4-week, 8-week, 13-week T-bill rates vs. money market alternatives — frame the decision in 3 options",
+    sessionPrompt: "I have Treasury bills maturing this week in April. Help me compare current 4-week, 8-week, and 13-week T-bill rates against alternatives. Context: $570K in assets, $2.98M freedom number, 90-day consulting clock active.",
   },
   {
-    id: 9, score: 75, category: "Workflow",
-    headline: "Handoff Index Needs Archival",
-    detail: "40+ entries in 5 days, most integrated or dead. Auto-pickup scans the full index on every session start — a lean index is a faster index. Archive threads older than 7 days with status integrated/dead.",
-    action: "Archive dead/integrated threads from before 2026-03-26",
-    sessionPrompt: "Help me archive old handoff threads. Archive all dead and integrated entries from before 2026-03-26 to handoff-index-archive.md.",
+    id: 9, score: 75, category: "Strategy",
+    headline: "Skills ratings need external signal — the bar is lower than it feels",
+    detail: "All 8 skills are at Day 4 ratings, all flat for 5 days. The learning system can't update scores without new evidence, and infrastructure-only sessions don't calibrate monetization or market-value skills. The bar for 'counts as external signal' is lower than it feels: a 5-line email to an energy-sector contact asking what frustrates them about AI adoption qualifies. So does reading one recent industry report and summarizing the AI angle. You don't need a client — you need contact with the market.",
+    action: "Identify one energy or financial services contact and send a 5-line email asking what's frustrating them about AI adoption in their org",
+    sessionPrompt: "Help me draft a short outreach message to someone in the energy sector about AI adoption challenges. Context: I'm a CAIO-level consultant building my first engagements. Keep it under 5 lines, no pitch.",
   },
   {
-    id: 10, score: 72, category: "Creative",
-    headline: "World Bible Hasn't Been Touched in 5 Days",
-    detail: "Book-bible V021 is stable but no creative sessions since the infrastructure sprint began. The Cartographer's Residue world is frozen. If writing energy is available after infrastructure tasks, a bible session would break the loop and deliver intrinsic value.",
-    action: "Say 'bible status' to check patched but uncommitted work",
-    sessionPrompt: "bible status",
+    id: 10, score: 72, category: "Learning",
+    headline: "L-006 is promotion-ready — 7 instances, confidence 0.6, write it today",
+    detail: "L-006 (tool scope matching) has 7 corroborating instances across env-assumption errors and is currently provisional with REVIEW_REQUIRED status. Promoting it makes it discoverable during the learning bootstrap (which future sessions run for non-trivial work), directly reducing the env-assumption error rate. The confidence level of 0.6 is appropriate — the pattern is consistent but the tool landscape could change with platform updates. Promotion takes 5 minutes and is autonomous-safe.",
+    action: "Open lessons.md and promote L-006: status → active, confidence → 0.70, add 3 most recent corroborating instances (ritchie-001, ritchie-002, albattani-001)",
+    sessionPrompt: "Read /Users/davenichols/AI/Claude/learning/lessons.md and help me promote L-006 (tool scope matching) from provisional to confirmed. Update confidence to 0.70, status to active, and add the 3 most recent corroborating error instances.",
   },
 ];
 
 const SKILLS_PROGRESS = [
-  { name: "Systems thinking", level: "Maturing", trend: "\u2192" },
-  { name: "Rule/process design", level: "Stable", trend: "\u2192" },
-  { name: "Tool ecosystem awareness", level: "Maturing", trend: "\u2192" },
-  { name: "Iteration discipline", level: "Maturing", trend: "\u2192" },
-  { name: "Monetization", level: "New", trend: "\u2192" },
-  { name: "Scoping under constraint", level: "Early", trend: "\u2192" },
+  { name: "Rule/Process Design", level: "Stable", trend: "→" },
+  { name: "Systems Thinking", level: "Stable", trend: "→" },
+  { name: "Iteration Discipline", level: "Stable", trend: "→" },
+  { name: "Tool Ecosystem", level: "Stable", trend: "→" },
+  { name: "Monetization", level: "No signal", trend: "→" },
 ];
-
 
 // ═══════════════════════════════════════════════════════════════════════════
 // COMPONENT — Do not modify below this line.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');`;
+
+const DASH_CSS = `
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  .db-root {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: #f7f5f1;
+    color: #1a1a1a;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  .db-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0,0,0,.09);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    flex-shrink: 0;
+  }
+  .db-header-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .db-grid {
+    display: grid;
+    grid-template-columns: 1.55fr 1fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "cal   side"
+      "tips  tips"
+      "foot  foot";
+    gap: 16px;
+    padding: 20px 24px 24px;
+    flex: 1;
+    align-items: start;
+  }
+  .db-cal  { grid-area: cal; }
+  .db-side { grid-area: side; display: flex; flex-direction: column; gap: 16px; }
+  .db-tips { grid-area: tips; }
+  .db-foot { grid-area: foot; }
+  @media (max-width: 760px) {
+    .db-grid {
+      grid-template-columns: 1fr;
+      grid-template-areas: "cal" "side" "tips" "foot";
+      padding: 14px 14px 20px;
+      gap: 12px;
+    }
+    .db-header { padding: 12px 14px; }
+  }
+`;
 
 const C = {
   bg: "#f7f5f1", surface: "#ffffff", surfaceAlt: "#f2f0ec",
@@ -165,7 +206,7 @@ const F = {
 
 const sectionCard = {
   background: C.surface, borderRadius: 12,
-  border: `1px solid ${C.border}`, marginBottom: 16, overflow: "hidden",
+  border: `1px solid ${C.border}`, overflow: "hidden",
 };
 const sectionHeader = {
   display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -197,7 +238,7 @@ function CalendarSection() {
       </div>
       <div style={sectionBody}>
         {calEvents.length === 0 ? (
-          <div style={{ fontFamily: F.body, fontSize: 14, color: C.inkSoft, padding: "8px 0" }}>Nothing on the calendar today. A good day to catch up or lest.</div>
+          <div style={{ fontFamily: F.body, fontSize: 14, color: C.inkSoft, padding: "8px 0" }}>Nothing on the calendar today. A good day to catch up or rest.</div>
         ) : calEvents.map((ev, i) => (
           <div key={ev.id} style={{ marginBottom: i < calEvents.length - 1 ? 12 : 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -362,42 +403,56 @@ function TipsSection() {
   );
 }
 
-function SkillsBar() {
+function SkillsCard() {
   return (
-    <div style={{ display: "flex", gap: 12, flexWrap: "wrap", padding: "10px 18px", background: C.surfaceAlt, borderRadius: 8, marginTop: 2 }}>
-      {SKILLS_PROGRESS.map((s, i) => (
-        <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: F.mono, fontSize: 11, color: C.inkMid }}>
-          <span style={{ color: C.ink, fontWeight: 500 }}>{s.name}</span>
-          <span style={{ color: C.inkFaint }}>·</span>
-          <span>{s.level}</span>
-          <span style={{ color: s.trend === "↑" ? C.green : C.inkFaint }}>{s.trend}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export default function MorningDashboard() {
-  return (
-    <div style={{ fontFamily: F.body, background: C.bg, color: C.ink, padding: "20px 16px", minHeight: "100vh", maxWidth: 580, margin: "0 auto" }}>
-      <style>{FONTS}</style>
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ fontFamily: F.display, fontSize: 18, fontWeight: 800, color: C.ink }}>{GREETING}</span>
-          <span style={{ fontFamily: F.mono, fontSize: 12, color: C.inkFaint }}>{BRIEFING_TIME}</span>
-        </div>
-        <div style={{ fontFamily: F.body, fontSize: 13, color: C.inkSoft }}>{BRIEFING_DATE}</div>
+    <div style={sectionCard}>
+      <div style={sectionHeader}>
+        <span style={sectionLabel}>Skills</span>
+        <span style={{ fontFamily: F.mono, fontSize: 11, color: C.inkFaint }}>progress</span>
       </div>
-      <CalendarSection />
-      <SystemsSection />
-      <TipsSection />
-      <SkillsBar />
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14, padding: "8px 0" }}>
-        {["cal", "cal add [event]", "tip rate [n] [score]"].map((h, i) => (
-          <span key={i} style={{ fontFamily: F.mono, fontSize: 11, color: C.inkSoft, padding: "3px 8px", background: C.surfaceAlt, borderRadius: 4, border: `1px solid ${C.border}` }}>{h}</span>
+      <div style={{ padding: "12px 18px 14px", display: "flex", flexDirection: "column", gap: 7 }}>
+        {SKILLS_PROGRESS.map((s, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 0 }}>
+            <span style={{ fontFamily: F.body, fontSize: 13, fontWeight: 500, color: C.ink, flex: 1 }}>{s.name}</span>
+            <span style={{ fontFamily: F.mono, fontSize: 11, color: C.inkSoft, marginRight: 8 }}>{s.level}</span>
+            <span style={{ fontFamily: F.mono, fontSize: 13, color: s.trend === "↑" ? C.green : s.trend === "↓" ? C.red : C.inkFaint }}>{s.trend}</span>
+          </div>
         ))}
       </div>
     </div>
   );
 }
 
+export default function MorningDashboard() {
+  return (
+    <div className="db-root">
+      <style>{FONTS + DASH_CSS}</style>
+      <div className="db-header">
+        <span style={{ fontFamily: F.display, fontSize: 20, fontWeight: 800, color: C.ink }}>{GREETING}</span>
+        <div className="db-header-meta">
+          <span style={{ fontFamily: F.body, fontSize: 13, color: C.inkSoft }}>{BRIEFING_DATE}</span>
+          <span style={{ fontFamily: F.mono, fontSize: 12, color: C.inkFaint }}>{BRIEFING_TIME}</span>
+        </div>
+      </div>
+      <div className="db-grid">
+        <div className="db-cal">
+          <CalendarSection />
+        </div>
+        <div className="db-side">
+          <SystemsSection />
+          <SkillsCard />
+        </div>
+        <div className="db-tips">
+          <TipsSection />
+        </div>
+        <div className="db-foot">
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {["cal", "cal add [event]", "tip rate [n] [score]"].map((h, i) => (
+              <span key={i} style={{ fontFamily: F.mono, fontSize: 11, color: C.inkSoft, padding: "3px 8px", background: C.surfaceAlt, borderRadius: 4, border: `1px solid ${C.border}` }}>{h}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
