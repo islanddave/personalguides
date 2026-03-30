@@ -2,19 +2,25 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import KinkGuide from './kink-guide.jsx'
 import Caltasks from './caltasks.jsx'
+import MorningDashboard from './morning-dashboard.jsx'
 
 const ROUTES = {
   'caltasks.futureishere.net': { component: Caltasks, title: "Jen's Cowork Setup" },
+  'morning.futureishere.net': { component: MorningDashboard, title: 'Morning Dashboard' },
 }
 
 const host = window.location.hostname
 const route = ROUTES[host]
 const App = route ? route.component : KinkGuide
 
-if (route) { document.title = route.title }
+if (route) {
+  document.title = route.title
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode><App /></React.StrictMode>
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
 )
 
 if ('serviceWorker' in navigator) {
