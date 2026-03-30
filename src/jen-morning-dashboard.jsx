@@ -1,0 +1,1 @@
+export default function JenMorningDashboard(){return <div style={{fontFamily:'sans-serif',padding:40,color:'#333'}}><h2>Jen Morning Dashboard</h2><p>Coming soon — building in S4.</p></div>}
