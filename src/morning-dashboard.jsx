@@ -6,6 +6,7 @@ import { useState } from "react";
 
 const BRIEFING_DATE = "Monday, Mar 30";
 const BRIEFING_TIME = "4:24p";
+const TIP_DATE = "0330"; // MMDD — scopes tip IDs: 0330-01 through 0330-10
 const GREETING = "Good afternoon, Dave.";
 
 const CAL_SUMMARY = "Clear day · clear week";
@@ -310,9 +311,9 @@ function RatingPanel({ tip, onClose }) {
   const [myScore, setMyScore] = useState("");
   const [comment, setComment] = useState("");
   const [copied, setCopied] = useState(false);
-  const cmdText = `tip rate ${tip.id} ${myScore || "?"}${comment ? ` "${comment}"` : ""}`;
+  const cmdText = `tip rate ${TIP_DATE}-${String(tip.id).padStart(2,'0')} ${myScore || "?"}${comment ? ` "${comment}"` : ""}`;  
   const handleCopy = () => {
-    const text = `tip rate ${tip.id} ${myScore}${comment ? ` "${comment}"` : ""}`;
+    const text = `tip rate ${TIP_DATE}-${String(tip.id).padStart(2,'0')} ${myScore}${comment ? ` "${comment}"` : ""}`;  
     if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -375,6 +376,7 @@ function TipsSection() {
               <div onClick={() => toggleExpand(tip.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 18px", cursor: "pointer", background: isOpen ? C.surfaceAlt : "transparent", borderBottom: !isOpen && !isRating && !isLast ? `1px solid ${C.border}` : "none", transition: "background 150ms ease" }}>
                 <span style={{ fontFamily: F.mono, fontSize: 11, color: C.inkFaint, width: 14, textAlign: "center", flexShrink: 0, transition: "transform 150ms ease", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", display: "inline-block" }}>▸</span>
                 <span onClick={(e) => toggleRating(tip.id, e)} title="Click to rate this tip" style={{ fontFamily: F.mono, fontSize: 12, fontWeight: 500, color: isRating ? "#6366f1" : scoreColor, background: isRating ? C.ratingBg : scoreBg, border: isRating ? `1px solid ${C.ratingBorder}` : "1px solid transparent", padding: "2px 8px", borderRadius: 4, minWidth: 32, textAlign: "center", flexShrink: 0, cursor: "pointer", transition: "all 150ms ease", userSelect: "none" }}>{tip.score}</span>
+                <span style={{ fontFamily: F.mono, fontSize: 10, color: C.inkFaint, padding: "1px 5px", background: C.surfaceAlt, borderRadius: 3, flexShrink: 0, letterSpacing: "0.03em", whiteSpace: "nowrap" }}>{TIP_DATE}-{String(tip.id).padStart(2,'0')}</span>
                 <div style={{ fontFamily: F.body, fontSize: 13.5, color: C.ink, flex: 1, lineHeight: 1.35 }}>{tip.headline}</div>
                 <span style={{ fontFamily: F.mono, fontSize: 10, color: C.inkFaint, padding: "2px 6px", border: `1px solid ${C.border}`, borderRadius: 3, flexShrink: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>{tip.category}</span>
               </div>
