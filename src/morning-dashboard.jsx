@@ -202,6 +202,47 @@ const goalAnchor = {
 const mondayScorecard = null;
 
 
+// ─── Dashboard Meta ───────────────────────────────────────────────────────────
+// Read from /morning-dashboard/dashboard-meta.json at task run time.
+// changelog entry: { date (YYYY-MM-DD), type ("added"|"changed"|"removed"|"fixed"), item, note }
+// nextIdeas entry: { idea, desc, sessionPrompt }
+const dashboardMeta = {
+  version: "V006-20260401",
+  changelog: [
+    { date: "2026-04-01", type: "added",   item: "Dashboard Meta block",      note: "Self-documenting: block inventory, changelog, and next-evolution ideas with copy prompts." },
+    { date: "2026-03-28", type: "added",   item: "Morning Intent block",       note: "Top 3 synthesized priorities from threads, calendar, goals, systems. Replaced passive summary." },
+    { date: "2026-03-28", type: "added",   item: "Goal Anchor block",          note: "90-day sprint progress bar driven by goals.json. Gives the daily grind a horizon line." },
+    { date: "2026-03-28", type: "added",   item: "Consulting Signal block",    note: "3 curated industry signals, each connected to practice positioning." },
+    { date: "2026-03-27", type: "changed", item: "Calendar → sidebar",         note: "Shifted from main column to sidebar so tips and threads get more vertical space." },
+    { date: "2026-03-26", type: "added",   item: "Thread Pulse block",         note: "Full thread list with age, project, stale flag, and copyable pickup commands." },
+    { date: "2026-03-25", type: "changed", item: "Tip ID copy",                note: "Each tip gets a copyable ID for the tip-rating feedback loop." },
+    { date: "2026-03-24", type: "added",   item: "Monday Scorecard block",     note: "Weekly CQR analysis by domain, conditionally rendered on Mondays." },
+  ],
+  nextIdeas: [
+    {
+      idea: "3-day momentum block",
+      desc: "Yesterday's key action, today's primary move, what tomorrow unlocks. Makes sprint progress feel real even on slow days.",
+      sessionPrompt: "I want to add a '3-day momentum' block to my morning dashboard. It should show: yesterday's key action, today's primary move, and what tomorrow unlocks. Draft the data schema and a React component matching the dashboard's visual style.",
+    },
+    {
+      idea: "Open decisions block",
+      desc: "Decisions you're stalling on — not tasks, but binary choices. These get buried in threads and quietly stall real progress.",
+      sessionPrompt: "I want to add an 'open decisions' block to my morning dashboard. It should surface decisions I'm waiting on myself to make — not tasks, but choices. Draft the data schema (sourced from handoff Pending/State sections) and a component matching the dashboard style.",
+    },
+    {
+      idea: "Weekly rhythm view",
+      desc: "Which day is deep work, outreach, Nika, rest. Puts each daily card in context of the week's intended shape.",
+      sessionPrompt: "I want to add a weekly rhythm block to my morning dashboard showing my intended day-type for each day (deep work / outreach / family / rest). Draft the data structure and a React component matching the dashboard's visual style.",
+    },
+    {
+      idea: "Signal talking-point layer",
+      desc: "Each signal has a 'why it matters' note. Next: a one-sentence talking point ready to paste in outreach or a discovery call.",
+      sessionPrompt: "Enhance the Consulting Signal section of my morning dashboard: each signal should include a ready-to-paste talking point I can use verbatim in outreach or a call. Update the ConsultingSignalSection component and the dashboardMeta changelog.",
+    },
+  ],
+};
+
+
 // ═══════════════════════════════════════════════════════════════════════════
 // COMPONENT — Do not modify below this line.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -834,6 +875,100 @@ function ConsultingSignalSection() {
 
 // ─── Monday Scorecard ─────────────────────────────────────────────────────────
 // Only renders when IS_MONDAY and mondayScorecard is populated.
+function DashboardMetaSection() {
+  const [view, setView] = useState("log");
+  const [copiedIdx, setCopiedIdx] = useState(null);
+  const copy = (text, i, e) => {
+    if (e) e.stopPropagation();
+    copyText(text);
+    setCopiedIdx(i);
+    setTimeout(() => setCopiedIdx(null), 1500);
+  };
+  const tabBtn = (id, label) => (
+    <button key={id} onClick={() => setView(id)} style={{ fontFamily: F.mono, fontSize: 10, padding: "2px 8px", borderRadius: 3, border: "none", cursor: "pointer", background: view === id ? C.ink : "transparent", color: view === id ? "#fff" : C.inkSoft, transition: "all 120ms ease" }}>{label}</button>
+  );
+  const TYPE_STYLE = {
+    added:   { color: C.green,    bg: C.greenPale },
+    changed: { color: C.amber,    bg: C.amberPale },
+    removed: { color: C.red,      bg: C.redPale   },
+    fixed:   { color: C.sageDark, bg: C.sagePale  },
+  };
+  const BLOCKS = [
+    { name: "Intent",         desc: "Top 3 synthesized priorities from threads, calendar, goals, and systems. Copyable session prompts for one-click action." },
+    { name: "Calendar",       desc: "Today's events with contextual prep nudges. Travel reminders, material checks, conflict flags. Monday adds week-shape view." },
+    { name: "Systems",        desc: "Error pattern analysis (24h, 7-day), vault health, compliance audit. Surfaces a single priority fix when actionable." },
+    { name: "Skills",         desc: "Maturity levels for 6 active Cowork skills: Calendar, Handoff, Bible, Cartography, Skill Manager, Session." },
+    { name: "Threads",        desc: "Active and loaded handoff threads with age, project, stale flag, and copyable pickup commands." },
+    { name: "Goal Anchor",    desc: "90-day sprint progress bar driven by goals.json — label, target, milestone, elapsed %." },
+    { name: "Signals",        desc: "3 curated AI/energy industry signals from web search. Each tied to a why-it-matters consulting frame." },
+    { name: "Mon Scorecard",  desc: "Weekly CQR averages by domain with trend arrows. Only renders on Mondays.", tag: "Mon" },
+    { name: "Dashboard Meta", desc: "This block. Changelog, block inventory, and next-evolution ideas with copyable session prompts.", tag: "new" },
+  ];
+  return (
+    <div style={sectionCard}>
+      <div style={sectionHeader}>
+        <span style={sectionLabel}>Dashboard</span>
+        <div style={{ display: "flex", gap: 3 }}>
+          {tabBtn("log", "log")}
+          {tabBtn("blocks", "blocks")}
+          {tabBtn("next", "next")}
+        </div>
+      </div>
+      {view === "log" && (
+        <div>
+          {dashboardMeta.changelog.map((entry, i) => {
+            const ts = TYPE_STYLE[entry.type] || TYPE_STYLE.fixed;
+            return (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "8px 16px", borderBottom: i < dashboardMeta.changelog.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                <span style={{ fontFamily: F.mono, fontSize: 9, color: ts.color, background: ts.bg, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.05em", flexShrink: 0, marginTop: 2 }}>{entry.type}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: F.body, fontSize: 12, fontWeight: 500, color: C.ink }}>{entry.item}</div>
+                  <div style={{ fontFamily: F.body, fontSize: 11, color: C.inkMid, lineHeight: 1.4, marginTop: 1 }}>{entry.note}</div>
+                </div>
+                <span style={{ fontFamily: F.mono, fontSize: 10, color: C.inkFaint, flexShrink: 0, marginTop: 2 }}>{entry.date.slice(5)}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {view === "blocks" && (
+        <div>
+          {BLOCKS.map((block, i) => (
+            <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "8px 16px", borderBottom: i < BLOCKS.length - 1 ? `1px solid ${C.border}` : "none" }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontFamily: F.display, fontSize: 12, fontWeight: 700, color: C.ink }}>{block.name}</span>
+                  {block.tag && <span style={{ fontFamily: F.mono, fontSize: 9, color: C.inkSoft, background: C.surfaceAlt, padding: "1px 5px", borderRadius: 3, border: `1px solid ${C.border}` }}>{block.tag}</span>}
+                </div>
+                <div style={{ fontFamily: F.body, fontSize: 11, color: C.inkMid, lineHeight: 1.4 }}>{block.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {view === "next" && (
+        <div>
+          {dashboardMeta.nextIdeas.map((idea, i) => {
+            const isCopied = copiedIdx === i;
+            return (
+              <div key={i} style={{ padding: "9px 16px", borderBottom: i < dashboardMeta.nextIdeas.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                <div style={{ fontFamily: F.body, fontSize: 12, fontWeight: 500, color: C.ink, marginBottom: 3 }}>{idea.idea}</div>
+                <div style={{ fontFamily: F.body, fontSize: 11, color: C.inkMid, lineHeight: 1.4, marginBottom: 6 }}>{idea.desc}</div>
+                <button onClick={(e) => copy(idea.sessionPrompt, i, e)} style={{ padding: "2px 9px", borderRadius: 3, border: "none", cursor: "pointer", background: isCopied ? C.green : C.surfaceAlt, color: isCopied ? "#fff" : C.inkSoft, fontFamily: F.mono, fontSize: 10, fontWeight: 500, transition: "all 150ms ease" }}>{isCopied ? "✓ Copied" : "Copy"}</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <div style={{ padding: "5px 16px 8px", borderTop: `1px solid ${C.border}` }}>
+        <span style={{ fontFamily: F.mono, fontSize: 10, color: C.inkFaint }}>{dashboardMeta.version}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Monday Scorecard ─────────────────────────────────────────────────────────
+// Only renders when IS_MONDAY and mondayScorecard is populated.
 function MondayScorecardSection() {
   if (!mondayScorecard || !mondayScorecard.length) return null;
   const sorted = [...mondayScorecard].sort((a, b) => b.lastWeekAvg - a.lastWeekAvg);
@@ -894,6 +1029,7 @@ export default function MorningDashboard() {
           <MorningIntentSection />
           <GoalAnchorCard />
           <ConsultingSignalSection />
+          <DashboardMetaSection />
         </div>
         {IS_MONDAY && mondayScorecard && (
           <div className="db-score">
