@@ -94,7 +94,7 @@ const tips = [
     id: 8, score: 74, category: "Dave-actionable-data",
     headline: "April 11 CD maturity is 10 days out — confirm the allocation path from the handoff",
     detail: "The relaxed-confident-hawking session ran an independent analysis of the $241.4K in CDs maturing April 11+14. A plan was sketched and a calendar event set. The question is whether you still agree with that plan — a 10-minute re-read and confirmation prevents a day-of scramble when the CD actually matures.",
-    action: "Say 'pickup treasury ladder april execution' to review the allocation plan and notes whether you confirm or want to adjust.",
+    action: "Say 'pickup treasury ladder april execution' to review the allocation plan and note whether you confirm or want to adjust.",
     sessionPrompt: "pickup treasury ladder april execution",
   },
   {
@@ -200,47 +200,6 @@ const goalAnchor = {
 };
 
 const mondayScorecard = null;
-
-
-// ─── Dashboard Meta ───────────────────────────────────────────────────────────
-// Read from /morning-dashboard/dashboard-meta.json at task run time.
-// changelog entry: { date (YYYY-MM-DD), type ("added"|"changed"|"removed"|"fixed"), item, note }
-// nextIdeas entry: { idea, desc, sessionPrompt }
-const dashboardMeta = {
-  version: "V006-20260401",
-  changelog: [
-    { date: "2026-04-01", type: "added",   item: "Dashboard Meta block",      note: "Self-documenting: block inventory, changelog, and next-evolution ideas with copy prompts." },
-    { date: "2026-03-28", type: "added",   item: "Morning Intent block",       note: "Top 3 synthesized priorities from threads, calendar, goals, systems. Replaced passive summary." },
-    { date: "2026-03-28", type: "added",   item: "Goal Anchor block",          note: "90-day sprint progress bar driven by goals.json. Gives the daily grind a horizon line." },
-    { date: "2026-03-28", type: "added",   item: "Consulting Signal block",    note: "3 curated industry signals, each connected to practice positioning." },
-    { date: "2026-03-27", type: "changed", item: "Calendar → sidebar",         note: "Shifted from main column to sidebar so tips and threads get more vertical space." },
-    { date: "2026-03-26", type: "added",   item: "Thread Pulse block",         note: "Full thread list with age, project, stale flag, and copyable pickup commands." },
-    { date: "2026-03-25", type: "changed", item: "Tip ID copy",                note: "Each tip gets a copyable ID for the tip-rating feedback loop." },
-    { date: "2026-03-24", type: "added",   item: "Monday Scorecard block",     note: "Weekly CQR analysis by domain, conditionally rendered on Mondays." },
-  ],
-  nextIdeas: [
-    {
-      idea: "3-day momentum block",
-      desc: "Yesterday's key action, today's primary move, what tomorrow unlocks. Makes sprint progress feel real even on slow days.",
-      sessionPrompt: "I want to add a '3-day momentum' block to my morning dashboard. It should show: yesterday's key action, today's primary move, and what tomorrow unlocks. Draft the data schema and a React component matching the dashboard's visual style.",
-    },
-    {
-      idea: "Open decisions block",
-      desc: "Decisions you're stalling on — not tasks, but binary choices. These get buried in threads and quietly stall real progress.",
-      sessionPrompt: "I want to add an 'open decisions' block to my morning dashboard. It should surface decisions I'm waiting on myself to make — not tasks, but choices. Draft the data schema (sourced from handoff Pending/State sections) and a component matching the dashboard style.",
-    },
-    {
-      idea: "Weekly rhythm view",
-      desc: "Which day is deep work, outreach, Nika, rest. Puts each daily card in context of the week's intended shape.",
-      sessionPrompt: "I want to add a weekly rhythm block to my morning dashboard showing my intended day-type for each day (deep work / outreach / family / rest). Draft the data structure and a React component matching the dashboard's visual style.",
-    },
-    {
-      idea: "Signal talking-point layer",
-      desc: "Each signal has a 'why it matters' note. Next: a one-sentence talking point ready to paste in outreach or a discovery call.",
-      sessionPrompt: "Enhance the Consulting Signal section of my morning dashboard: each signal should include a ready-to-paste talking point I can use verbatim in outreach or a call. Update the ConsultingSignalSection component and the dashboardMeta changelog.",
-    },
-  ],
-};
 
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -360,8 +319,8 @@ const DASH_CSS = `
     display: grid;
     grid-template-columns: 2fr 1fr;
     grid-template-areas:
-      "tips  side"
-      "pulse side2"
+      "left  side"
+      "left  side2"
       "foot  foot";
     gap: 16px;
     padding: 20px 24px 24px;
@@ -370,21 +329,20 @@ const DASH_CSS = `
   }
   .db-grid.monday {
     grid-template-areas:
-      "tips  side"
-      "pulse side2"
+      "left  side"
+      "left  side2"
       "score score"
       "foot  foot";
   }
-  .db-tips  { grid-area: tips; }
+  .db-left  { grid-area: left; display: flex; flex-direction: column; gap: 16px; }
   .db-side  { grid-area: side;  display: flex; flex-direction: column; gap: 16px; }
-  .db-pulse { grid-area: pulse; }
   .db-side2 { grid-area: side2; display: flex; flex-direction: column; gap: 16px; }
   .db-score { grid-area: score; }
   .db-foot  { grid-area: foot; }
   @media (max-width: 760px) {
     .db-grid, .db-grid.monday {
       grid-template-columns: 1fr;
-      grid-template-areas: "tips" "side" "pulse" "side2" "score" "foot";
+      grid-template-areas: "left" "side" "side2" "score" "foot";
       padding: 14px 14px 20px;
       gap: 12px;
     }
@@ -486,13 +444,36 @@ function RatingPanel({ tip, onClose }) {
   const [myScore, setMyScore] = useState("");
   const [comment, setComment] = useState("");
   const [copied, setCopied] = useState(false);
-  const cmdText = `tip rate ${TIP_DATE}-${String(tip.id).padStart(2,'0')} ${myScore || "?"}${comment ? ` "${comment}"` : ""}`;
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [sendErr, setSendErr] = useState(false);
+  const tipId = `${TIP_DATE}-${String(tip.id).padStart(2,'0')}`;
+  const cmdText = `tip rate ${tipId} ${myScore || "?"}${comment ? ` "${comment}"` : ""}`;
   const handleCopy = (e) => {
     if (e) e.stopPropagation();
-    const text = `tip rate ${TIP_DATE}-${String(tip.id).padStart(2,'0')} ${myScore}${comment ? ` "${comment}"` : ""}`;
-    copyText(text);
+    copyText(`tip rate ${tipId} ${myScore}${comment ? ` "${comment}"` : ""}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+  const handleSend = async (e) => {
+    if (e) e.stopPropagation();
+    if (!myScore) return;
+    setSending(true);
+    setSendErr(false);
+    try {
+      const res = await fetch("http://localhost:7878/tip-rate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tipId, score: Number(myScore), comment: comment || "", ts: new Date().toISOString() })
+      });
+      if (!res.ok) throw new Error("server error");
+      setSent(true);
+      setTimeout(() => onClose(), 1500);
+    } catch {
+      setSendErr(true);
+    } finally {
+      setSending(false);
+    }
   };
   return (
     <div style={{ padding: "10px 18px 12px 18px", background: C.ratingBg, borderTop: `1px solid ${C.ratingBorder}` }}>
@@ -502,9 +483,11 @@ function RatingPanel({ tip, onClose }) {
       </div>
       <div style={{ display: "flex", gap: 8, alignItems: "stretch", marginBottom: 8 }}>
         <input type="number" min="0" max="100" value={myScore} onChange={e => setMyScore(e.target.value)} placeholder="0–100" style={{ width: 64, padding: "6px 8px", fontFamily: F.mono, fontSize: 13, border: `1px solid ${C.ratingBorder}`, borderRadius: 6, background: "#fff", color: C.ink, outline: "none", flexShrink: 0 }} />
-        <input type="text" value={comment} onChange={e => setComment(e.target.value)} placeholder="Optional comment…" style={{ flex: 1, padding: "6px 10px", fontFamily: F.body, fontSize: 13, border: `1px solid ${C.ratingBorder}`, borderRadius: 6, background: "#fff", color: C.ink, outline: "none" }} />
-        <button onClick={handleCopy} disabled={!myScore} style={{ padding: "6px 14px", borderRadius: 6, border: "none", cursor: myScore ? "pointer" : "not-allowed", background: copied ? C.green : myScore ? "#6366f1" : C.surfaceAlt, color: myScore ? "#fff" : C.inkFaint, fontFamily: F.mono, fontSize: 12, fontWeight: 500, transition: "background 200ms ease", flexShrink: 0 }}>{copied ? "Copied!" : "Copy"}</button>
+        <input type="text" value={comment} onChange={e => setComment(e.target.value)} placeholder="Optional comment…" onKeyDown={e => { if (e.key === "Enter") handleSend(e); }} style={{ flex: 1, padding: "6px 10px", fontFamily: F.body, fontSize: 13, border: `1px solid ${C.ratingBorder}`, borderRadius: 6, background: "#fff", color: C.ink, outline: "none" }} />
+        <button onClick={handleSend} disabled={!myScore || sending || sent} style={{ padding: "6px 14px", borderRadius: 6, border: "none", cursor: myScore && !sending && !sent ? "pointer" : "not-allowed", background: sent ? C.green : sendErr ? "#ef4444" : myScore ? "#6366f1" : C.surfaceAlt, color: myScore ? "#fff" : C.inkFaint, fontFamily: F.mono, fontSize: 12, fontWeight: 500, transition: "background 200ms ease", flexShrink: 0 }}>{sent ? "✓ Sent" : sending ? "…" : sendErr ? "Retry" : "Send"}</button>
+        <button onClick={handleCopy} disabled={!myScore} style={{ padding: "6px 14px", borderRadius: 6, border: `1px solid ${C.ratingBorder}`, cursor: myScore ? "pointer" : "not-allowed", background: copied ? C.surfaceAlt : "transparent", color: myScore ? C.ink : C.inkFaint, fontFamily: F.mono, fontSize: 12, fontWeight: 500, flexShrink: 0 }}>{copied ? "✓" : "Copy"}</button>
       </div>
+      {sendErr && <div style={{ fontFamily: F.mono, fontSize: 11, color: "#ef4444", marginBottom: 6 }}>Server offline — use Copy to submit manually</div>}
       <div style={{ fontFamily: F.mono, fontSize: 11, color: myScore ? "#6366f1" : C.inkFaint, background: "#fff", border: `1px solid ${C.ratingBorder}`, borderRadius: 5, padding: "5px 10px", letterSpacing: "0.02em" }}>{cmdText}</div>
     </div>
   );
@@ -639,7 +622,7 @@ function TipsSection() {
   const closeRating = (id) => setRatingOpen(prev => ({ ...prev, [id]: false }));
   const handleCopyId = (tipId, e) => {
     e.stopPropagation();
-    const text = `${TIP_DATE}-${String(tipId).padStart(2,'0')}`;
+    const text = `${TIP_DATE}-${String(tipId).padStart(2,'00')}`;
     copyText(text);
     setCopiedId(tipId);
     setTimeout(() => setCopiedId(null), 1500);
@@ -875,100 +858,6 @@ function ConsultingSignalSection() {
 
 // ─── Monday Scorecard ─────────────────────────────────────────────────────────
 // Only renders when IS_MONDAY and mondayScorecard is populated.
-function DashboardMetaSection() {
-  const [view, setView] = useState("log");
-  const [copiedIdx, setCopiedIdx] = useState(null);
-  const copy = (text, i, e) => {
-    if (e) e.stopPropagation();
-    copyText(text);
-    setCopiedIdx(i);
-    setTimeout(() => setCopiedIdx(null), 1500);
-  };
-  const tabBtn = (id, label) => (
-    <button key={id} onClick={() => setView(id)} style={{ fontFamily: F.mono, fontSize: 10, padding: "2px 8px", borderRadius: 3, border: "none", cursor: "pointer", background: view === id ? C.ink : "transparent", color: view === id ? "#fff" : C.inkSoft, transition: "all 120ms ease" }}>{label}</button>
-  );
-  const TYPE_STYLE = {
-    added:   { color: C.green,    bg: C.greenPale },
-    changed: { color: C.amber,    bg: C.amberPale },
-    removed: { color: C.red,      bg: C.redPale   },
-    fixed:   { color: C.sageDark, bg: C.sagePale  },
-  };
-  const BLOCKS = [
-    { name: "Intent",         desc: "Top 3 synthesized priorities from threads, calendar, goals, and systems. Copyable session prompts for one-click action." },
-    { name: "Calendar",       desc: "Today's events with contextual prep nudges. Travel reminders, material checks, conflict flags. Monday adds week-shape view." },
-    { name: "Systems",        desc: "Error pattern analysis (24h, 7-day), vault health, compliance audit. Surfaces a single priority fix when actionable." },
-    { name: "Skills",         desc: "Maturity levels for 6 active Cowork skills: Calendar, Handoff, Bible, Cartography, Skill Manager, Session." },
-    { name: "Threads",        desc: "Active and loaded handoff threads with age, project, stale flag, and copyable pickup commands." },
-    { name: "Goal Anchor",    desc: "90-day sprint progress bar driven by goals.json — label, target, milestone, elapsed %." },
-    { name: "Signals",        desc: "3 curated AI/energy industry signals from web search. Each tied to a why-it-matters consulting frame." },
-    { name: "Mon Scorecard",  desc: "Weekly CQR averages by domain with trend arrows. Only renders on Mondays.", tag: "Mon" },
-    { name: "Dashboard Meta", desc: "This block. Changelog, block inventory, and next-evolution ideas with copyable session prompts.", tag: "new" },
-  ];
-  return (
-    <div style={sectionCard}>
-      <div style={sectionHeader}>
-        <span style={sectionLabel}>Dashboard</span>
-        <div style={{ display: "flex", gap: 3 }}>
-          {tabBtn("log", "log")}
-          {tabBtn("blocks", "blocks")}
-          {tabBtn("next", "next")}
-        </div>
-      </div>
-      {view === "log" && (
-        <div>
-          {dashboardMeta.changelog.map((entry, i) => {
-            const ts = TYPE_STYLE[entry.type] || TYPE_STYLE.fixed;
-            return (
-              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "8px 16px", borderBottom: i < dashboardMeta.changelog.length - 1 ? `1px solid ${C.border}` : "none" }}>
-                <span style={{ fontFamily: F.mono, fontSize: 9, color: ts.color, background: ts.bg, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.05em", flexShrink: 0, marginTop: 2 }}>{entry.type}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: F.body, fontSize: 12, fontWeight: 500, color: C.ink }}>{entry.item}</div>
-                  <div style={{ fontFamily: F.body, fontSize: 11, color: C.inkMid, lineHeight: 1.4, marginTop: 1 }}>{entry.note}</div>
-                </div>
-                <span style={{ fontFamily: F.mono, fontSize: 10, color: C.inkFaint, flexShrink: 0, marginTop: 2 }}>{entry.date.slice(5)}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {view === "blocks" && (
-        <div>
-          {BLOCKS.map((block, i) => (
-            <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "8px 16px", borderBottom: i < BLOCKS.length - 1 ? `1px solid ${C.border}` : "none" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                  <span style={{ fontFamily: F.display, fontSize: 12, fontWeight: 700, color: C.ink }}>{block.name}</span>
-                  {block.tag && <span style={{ fontFamily: F.mono, fontSize: 9, color: C.inkSoft, background: C.surfaceAlt, padding: "1px 5px", borderRadius: 3, border: `1px solid ${C.border}` }}>{block.tag}</span>}
-                </div>
-                <div style={{ fontFamily: F.body, fontSize: 11, color: C.inkMid, lineHeight: 1.4 }}>{block.desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      {view === "next" && (
-        <div>
-          {dashboardMeta.nextIdeas.map((idea, i) => {
-            const isCopied = copiedIdx === i;
-            return (
-              <div key={i} style={{ padding: "9px 16px", borderBottom: i < dashboardMeta.nextIdeas.length - 1 ? `1px solid ${C.border}` : "none" }}>
-                <div style={{ fontFamily: F.body, fontSize: 12, fontWeight: 500, color: C.ink, marginBottom: 3 }}>{idea.idea}</div>
-                <div style={{ fontFamily: F.body, fontSize: 11, color: C.inkMid, lineHeight: 1.4, marginBottom: 6 }}>{idea.desc}</div>
-                <button onClick={(e) => copy(idea.sessionPrompt, i, e)} style={{ padding: "2px 9px", borderRadius: 3, border: "none", cursor: "pointer", background: isCopied ? C.green : C.surfaceAlt, color: isCopied ? "#fff" : C.inkSoft, fontFamily: F.mono, fontSize: 10, fontWeight: 500, transition: "all 150ms ease" }}>{isCopied ? "✓ Copied" : "Copy"}</button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      <div style={{ padding: "5px 16px 8px", borderTop: `1px solid ${C.border}` }}>
-        <span style={{ fontFamily: F.mono, fontSize: 10, color: C.inkFaint }}>{dashboardMeta.version}</span>
-      </div>
-    </div>
-  );
-}
-
-// ─── Monday Scorecard ─────────────────────────────────────────────────────────
-// Only renders when IS_MONDAY and mondayScorecard is populated.
 function MondayScorecardSection() {
   if (!mondayScorecard || !mondayScorecard.length) return null;
   const sorted = [...mondayScorecard].sort((a, b) => b.lastWeekAvg - a.lastWeekAvg);
@@ -1014,7 +903,8 @@ export default function MorningDashboard() {
         </div>
       </div>
       <div className={`db-grid${IS_MONDAY ? " monday" : ""}`}>
-        <div className="db-tips">
+        <div className="db-left">
+          <ThreadPulseSection />
           <TipsSection />
         </div>
         <div className="db-side">
@@ -1022,14 +912,10 @@ export default function MorningDashboard() {
           <SystemsSection />
           <SkillsCard />
         </div>
-        <div className="db-pulse">
-          <ThreadPulseSection />
-        </div>
         <div className="db-side2">
           <MorningIntentSection />
           <GoalAnchorCard />
           <ConsultingSignalSection />
-          <DashboardMetaSection />
         </div>
         {IS_MONDAY && mondayScorecard && (
           <div className="db-score">
