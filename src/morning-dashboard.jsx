@@ -215,7 +215,6 @@ const LEVEL_STYLE = {
   Stable:   { color: "#065f46", bg: "#d1fae5" },
 };
 
-// Source badge styles for Morning Intent
 const INTENT_SOURCE_STYLE = {
   threads:  { color: "#6366f1", bg: "#eef2ff" },
   calendar: { color: "#0284c7", bg: "#e0f2fe" },
@@ -382,36 +381,13 @@ function RatingPanel({ tip, onClose }) {
   const [myScore, setMyScore] = useState("");
   const [comment, setComment] = useState("");
   const [copied, setCopied] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [sendErr, setSendErr] = useState(false);
-  const tipId = `${TIP_DATE}-${String(tip.id).padStart(2,'0')}`;
-  const cmdText = `tip rate ${tipId} ${myScore || "?"}${comment ? ` "${comment}"` : ""}`;
+  const cmdText = `tip rate ${TIP_DATE}-${String(tip.id).padStart(2,'0')} ${myScore || "?"}${comment ? ` "${comment}"` : ""}`;
   const handleCopy = (e) => {
     if (e) e.stopPropagation();
-    copyText(`tip rate ${tipId} ${myScore}${comment ? ` "${comment}"` : ""}`);
+    const text = `tip rate ${TIP_DATE}-${String(tip.id).padStart(2,'0')} ${myScore}${comment ? ` "${comment}"` : ""}`;
+    copyText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
-  const handleSend = async (e) => {
-    if (e) e.stopPropagation();
-    if (!myScore) return;
-    setSending(true);
-    setSendErr(false);
-    try {
-      const res = await fetch("http://localhost:7878/tip-rate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tipId, score: Number(myScore), comment: comment || "", ts: new Date().toISOString() })
-      });
-      if (!res.ok) throw new Error("server error");
-      setSent(true);
-      setTimeout(() => onClose(), 1500);
-    } catch {
-      setSendErr(true);
-    } finally {
-      setSending(false);
-    }
   };
   return (
     <div style={{ padding: "10px 18px 12px 18px", background: C.ratingBg, borderTop: `1px solid ${C.ratingBorder}` }}>
@@ -421,45 +397,59 @@ function RatingPanel({ tip, onClose }) {
       </div>
       <div style={{ display: "flex", gap: 8, alignItems: "stretch", marginBottom: 8 }}>
         <input type="number" min="0" max="100" value={myScore} onChange={e => setMyScore(e.target.value)} placeholder="0–100" style={{ width: 64, padding: "6px 8px", fontFamily: F.mono, fontSize: 13, border: `1px solid ${C.ratingBorder}`, borderRadius: 6, background: "#fff", color: C.ink, outline: "none", flexShrink: 0 }} />
-        <input type="text" value={comment} onChange={e => setComment(e.target.value)} placeholder="Optional comment…" onKeyDown={e => { if (e.key === "Enter") handleSend(e); }} style={{ flex: 1, padding: "6px 10px", fontFamily: F.body, fontSize: 13, border: `1px solid ${C.ratingBorder}`, borderRadius: 6, background: "#fff", color: C.ink, outline: "none" }} />
-        <button onClick={handleSend} disabled={!myScore || sending || sent} style={{ padding: "6px 14px", borderRadius: 6, border: "none", cursor: myScore && !sending && !sent ? "pointer" : "not-allowed", background: sent ? C.green : sendErr ? "#ef4444" : myScore ? "#6366f1" : C.surfaceAlt, color: myScore ? "#fff" : C.inkFaint, fontFamily: F.mono, fontSize: 12, fontWeight: 500, transition: "background 200ms ease", flexShrink: 0 }}>{sent ? "✓ Sent" : sending ? "…" : sendErr ? "Retry" : "Send"}</button>
-        <button onClick={handleCopy} disabled={!myScore} style={{ padding: "6px 14px", borderRadius: 6, border: `1px solid ${C.ratingBorder}`, cursor: myScore ? "pointer" : "not-allowed", background: copied ? C.surfaceAlt : "transparent", color: myScore ? C.ink : C.inkFaint, fontFamily: F.mono, fontSize: 12, fontWeight: 500, flexShrink: 0 }}>{copied ? "✓" : "Copy"}</button>
+        <input type="text" value={comment} onChange={e => setComment(e.target.value)} placeholder="Optional comment…" style={{ flex: 1, padding: "6px 10px", fontFamily: F.body, fontSize: 13, border: `1px solid ${C.ratingBorder}`, borderRadius: 6, background: "#fff", color: C.ink, outline: "none" }} />
+        <button onClick={handleCopy} disabled={!myScore} style={{ padding: "6px 14px", borderRadius: 6, border: "none", cursor: myScore ? "pointer" : "not-allowed", background: copied ? C.green : myScore ? "#6366f1" : C.surfaceAlt, color: myScore ? "#fff" : C.inkFaint, fontFamily: F.mono, fontSize: 12, fontWeight: 500, transition: "background 200ms ease", flexShrink: 0 }}>{copied ? "Copied!" : "Copy"}</button>
       </div>
-      {sendErr && <div style={{ fontFamily: F.mono, fontSize: 11, color: "#ef4444", marginBottom: 6 }}>Server offline — use Copy to submit manually</div>}
       <div style={{ fontFamily: F.mono, fontSize: 11, color: myScore ? "#6366f1" : C.inkFaint, background: "#fff", border: `1px solid ${C.ratingBorder}`, borderRadius: 5, padding: "5px 10px", letterSpacing: "0.02em" }}>{cmdText}</div>
     </div>
   );
 }
 
 function CalendarSection() {
+  const conflicts = calEvents.filter(ev => ev.conflict);
   return (
     <div style={sectionCard}>
       <div style={sectionHeader}>
         <span style={sectionLabel}>Calendar</span>
         <span style={{ fontFamily: F.mono, fontSize: 12, color: C.inkSoft }}>{CAL_SUMMARY}</span>
       </div>
-      <div style={sectionBody}>
-        {calEvents.length === 0 ? (
-          <div style={{ fontFamily: F.body, fontSize: 14, color: C.inkSoft, padding: "8px 0" }}>Nothing on the calendar today. A good day to catch up or rest.</div>
-        ) : calEvents.map((ev, i) => (
-          <div key={ev.id} style={{ marginBottom: i < calEvents.length - 1 ? 12 : 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 3, height: 36, borderRadius: 2, background: ev.color, flexShrink: 0 }} />
-              <div style={{ minWidth: 58, flexShrink: 0 }}>
-                <div style={{ fontFamily: F.mono, fontSize: 14, fontWeight: 500, color: C.ink }}>{ev.time}</div>
-                <div style={{ fontFamily: F.mono, fontSize: 11, color: C.inkFaint }}>{ev.dur}</div>
-              </div>
-              <div style={{ fontFamily: F.body, fontSize: 14, fontWeight: 500, color: C.ink, flex: 1 }}>{ev.title}</div>
+      {conflicts.length > 0 && (
+        <div style={{ background: C.amberPale, borderBottom: `1px solid ${C.amber}44`, padding: "8px 14px 9px", display: "flex", flexDirection: "column", gap: 4 }}>
+          {conflicts.map(ev => (
+            <div key={ev.id} style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+              <span style={{ color: C.amber, fontFamily: F.mono, fontSize: 12, flexShrink: 0, marginTop: 1 }}>⚠</span>
+              <span style={{ fontFamily: F.body, fontSize: 12, color: C.amber, lineHeight: 1.4 }}>{ev.conflict}</span>
             </div>
-            {ev.prep && (
-              <div style={{ fontFamily: F.body, fontSize: 12.5, color: C.inkMid, padding: "4px 0 0 71px", lineHeight: 1.4 }}>
-                <span style={{ color: C.sage, marginRight: 4 }}>↳</span>{ev.prep}
+          ))}
+        </div>
+      )}
+      <div style={{ padding: "6px 0" }}>
+        {calEvents.length === 0 ? (
+          <div style={{ fontFamily: F.body, fontSize: 14, color: C.inkSoft, padding: "12px 18px" }}>Nothing on the calendar today.</div>
+        ) : calEvents.map((ev, i) => {
+          const isLast = i === calEvents.length - 1;
+          return (
+            <div key={ev.id} style={{ display: "flex", alignItems: "stretch", padding: "10px 18px", borderBottom: isLast ? "none" : `1px solid ${C.border}` }}>
+              <div style={{ width: 3, borderRadius: 2, background: ev.color, flexShrink: 0, minHeight: 40, marginRight: 10 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 40 }}>
+                  <div style={{ minWidth: 58, flexShrink: 0 }}>
+                    <div style={{ fontFamily: F.mono, fontSize: 14, fontWeight: 500, color: C.ink }}>{ev.time}</div>
+                    <div style={{ fontFamily: F.mono, fontSize: 11, color: C.inkFaint }}>{ev.dur}</div>
+                  </div>
+                  <div style={{ fontFamily: F.body, fontSize: 14, fontWeight: 500, color: C.ink, flex: 1, lineHeight: 1.35 }}>{ev.title}</div>
+                </div>
+                {ev.prep && (
+                  <div style={{ fontFamily: F.body, fontSize: 12.5, color: C.inkMid, paddingTop: 8, paddingLeft: 68, lineHeight: 1.4 }}>
+                    <span style={{ color: C.sage, marginRight: 4 }}>↳</span>{ev.prep}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        ))}
+            </div>
+          );
+        })}
         {IS_MONDAY && weekShape.length > 0 && (
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
+          <div style={{ margin: "10px 18px 4px", paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
             <div style={{ ...sectionLabel, marginBottom: 8, fontSize: 10 }}>This Week</div>
             {weekShape.map((d, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0", fontFamily: F.mono, fontSize: 12 }}>
@@ -560,7 +550,7 @@ function TipsSection() {
   const closeRating = (id) => setRatingOpen(prev => ({ ...prev, [id]: false }));
   const handleCopyId = (tipId, e) => {
     e.stopPropagation();
-    const text = `${TIP_DATE}-${String(tipId).padStart(2,'00')}`;
+    const text = `${TIP_DATE}-${String(tipId).padStart(2,'0')}`;
     copyText(text);
     setCopiedId(tipId);
     setTimeout(() => setCopiedId(null), 1500);
@@ -666,7 +656,6 @@ function SkillsCard() {
   );
 }
 
-// ─── Thread Pulse ─────────────────────────────────────────────────────────────
 function ThreadPulseSection() {
   const [copiedIdx, setCopiedIdx] = useState(null);
   const copy = (cmd, i, e) => {
@@ -710,7 +699,6 @@ function ThreadPulseSection() {
   );
 }
 
-// ─── Morning Intent ───────────────────────────────────────────────────────────
 function MorningIntentSection() {
   const [copiedIdx, setCopiedIdx] = useState(null);
   const copy = (cmd, i, e) => {
@@ -750,7 +738,6 @@ function MorningIntentSection() {
   );
 }
 
-// ─── Goal Anchor ──────────────────────────────────────────────────────────────
 function GoalAnchorCard() {
   const pct = Math.min(100, Math.max(0, goalAnchor.elapsedPct));
   return (
@@ -771,7 +758,6 @@ function GoalAnchorCard() {
   );
 }
 
-// ─── Consulting Signals ───────────────────────────────────────────────────────
 function ConsultingSignalSection() {
   return (
     <div style={sectionCard}>
@@ -794,8 +780,98 @@ function ConsultingSignalSection() {
   );
 }
 
-// ─── Monday Scorecard ─────────────────────────────────────────────────────────
-// Only renders when IS_MONDAY and mondayScorecard is populated.
+function DashboardMetaSection() {
+  const [view, setView] = useState("log");
+  const [copiedIdx, setCopiedIdx] = useState(null);
+  const copy = (text, i, e) => {
+    if (e) e.stopPropagation();
+    copyText(text);
+    setCopiedIdx(i);
+    setTimeout(() => setCopiedIdx(null), 1500);
+  };
+  const tabBtn = (id, label) => (
+    <button key={id} onClick={() => setView(id)} style={{ fontFamily: F.mono, fontSize: 10, padding: "2px 8px", borderRadius: 3, border: "none", cursor: "pointer", background: view === id ? C.ink : "transparent", color: view === id ? "#fff" : C.inkSoft, transition: "all 120ms ease" }}>{label}</button>
+  );
+  const TYPE_STYLE = {
+    added:   { color: C.green,    bg: C.greenPale },
+    changed: { color: C.amber,    bg: C.amberPale },
+    removed: { color: C.red,      bg: C.redPale   },
+    fixed:   { color: C.sageDark, bg: C.sagePale  },
+  };
+  const BLOCKS = [
+    { name: "Intent",         desc: "Top 3 synthesized priorities from threads, calendar, goals, and systems. Copyable session prompts for one-click action." },
+    { name: "Calendar",       desc: "Today's events with contextual prep nudges. Travel reminders, material checks, conflict flags. Monday adds week-shape view." },
+    { name: "Systems",        desc: "Error pattern analysis (24h, 7-day), vault health, compliance audit. Surfaces a single priority fix when actionable." },
+    { name: "Skills",         desc: "Maturity levels for 6 active Cowork skills: Calendar, Handoff, Bible, Cartography, Skill Manager, Session." },
+    { name: "Threads",        desc: "Active and loaded handoff threads with age, project, stale flag, and copyable pickup commands." },
+    { name: "Goal Anchor",    desc: "90-day sprint progress bar driven by goals.json — label, target, milestone, elapsed %." },
+    { name: "Signals",        desc: "3 curated AI/energy industry signals from web search. Each tied to a why-it-matters consulting frame." },
+    { name: "Mon Scorecard",  desc: "Weekly CQR averages by domain with trend arrows. Only renders on Mondays.", tag: "Mon" },
+    { name: "Dashboard Meta", desc: "This block. Changelog, block inventory, and next-evolution ideas with copyable session prompts.", tag: "new" },
+  ];
+  return (
+    <div style={sectionCard}>
+      <div style={sectionHeader}>
+        <span style={sectionLabel}>Dashboard</span>
+        <div style={{ display: "flex", gap: 3 }}>
+          {tabBtn("log", "log")}
+          {tabBtn("blocks", "blocks")}
+          {tabBtn("next", "next")}
+        </div>
+      </div>
+      {view === "log" && (
+        <div>
+          {dashboardMeta.changelog.map((entry, i) => {
+            const ts = TYPE_STYLE[entry.type] || TYPE_STYLE.fixed;
+            return (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "8px 16px", borderBottom: i < dashboardMeta.changelog.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                <span style={{ fontFamily: F.mono, fontSize: 9, color: ts.color, background: ts.bg, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.05em", flexShrink: 0, marginTop: 2 }}>{entry.type}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: F.body, fontSize: 12, fontWeight: 500, color: C.ink }}>{entry.item}</div>
+                  <div style={{ fontFamily: F.body, fontSize: 11, color: C.inkMid, lineHeight: 1.4, marginTop: 1 }}>{entry.note}</div>
+                </div>
+                <span style={{ fontFamily: F.mono, fontSize: 10, color: C.inkFaint, flexShrink: 0, marginTop: 2 }}>{entry.date.slice(5)}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {view === "blocks" && (
+        <div>
+          {BLOCKS.map((block, i) => (
+            <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "8px 16px", borderBottom: i < BLOCKS.length - 1 ? `1px solid ${C.border}` : "none" }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontFamily: F.display, fontSize: 12, fontWeight: 700, color: C.ink }}>{block.name}</span>
+                  {block.tag && <span style={{ fontFamily: F.mono, fontSize: 9, color: C.inkSoft, background: C.surfaceAlt, padding: "1px 5px", borderRadius: 3, border: `1px solid ${C.border}` }}>{block.tag}</span>}
+                </div>
+                <div style={{ fontFamily: F.body, fontSize: 11, color: C.inkMid, lineHeight: 1.4 }}>{block.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {view === "next" && (
+        <div>
+          {dashboardMeta.nextIdeas.map((idea, i) => {
+            const isCopied = copiedIdx === i;
+            return (
+              <div key={i} style={{ padding: "9px 16px", borderBottom: i < dashboardMeta.nextIdeas.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                <div style={{ fontFamily: F.body, fontSize: 12, fontWeight: 500, color: C.ink, marginBottom: 3 }}>{idea.idea}</div>
+                <div style={{ fontFamily: F.body, fontSize: 11, color: C.inkMid, lineHeight: 1.4, marginBottom: 6 }}>{idea.desc}</div>
+                <button onClick={(e) => copy(idea.sessionPrompt, i, e)} style={{ padding: "2px 9px", borderRadius: 3, border: "none", cursor: "pointer", background: isCopied ? C.green : C.surfaceAlt, color: isCopied ? "#fff" : C.inkSoft, fontFamily: F.mono, fontSize: 10, fontWeight: 500, transition: "all 150ms ease" }}>{isCopied ? "✓ Copied" : "Copy"}</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <div style={{ padding: "5px 16px 8px", borderTop: `1px solid ${C.border}` }}>
+        <span style={{ fontFamily: F.mono, fontSize: 10, color: C.inkFaint }}>{dashboardMeta.version}</span>
+      </div>
+    </div>
+  );
+}
+
 function MondayScorecardSection() {
   if (!mondayScorecard || !mondayScorecard.length) return null;
   const sorted = [...mondayScorecard].sort((a, b) => b.lastWeekAvg - a.lastWeekAvg);
@@ -854,6 +930,7 @@ export default function MorningDashboard() {
           <MorningIntentSection />
           <GoalAnchorCard />
           <ConsultingSignalSection />
+          <DashboardMetaSection />
         </div>
         {IS_MONDAY && mondayScorecard && (
           <div className="db-score">
