@@ -16,6 +16,13 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url)
 
+  // Bypass localhost entirely — Chrome's Private Network Access handles these
+  // directly. Service worker interception causes TypeError when the fetch is
+  // blocked or the response can't be cached across origins.
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+    return
+  }
+
   // Navigation requests (HTML): network-first so index.html is always fresh
   if (e.request.mode === 'navigate') {
     e.respondWith(
