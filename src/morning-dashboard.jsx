@@ -4,141 +4,203 @@ import { useState } from "react";
 // LIVE DATA — Claude replaces ONLY this section. Component code is frozen.
 // ═══════════════════════════════════════════════════════════════════════════
 
-const BRIEFING_DATE = "Thursday, Apr 2";
+const BRIEFING_DATE = "Wednesday, Apr 1";
 const BRIEFING_TIME = "3:32a";
-const TIP_DATE = "0402.0332";
+const TIP_DATE = "0401.0332";
 const GREETING = "Good morning, Dave.";
 
-// Calendar data
-const CAL_SUMMARY = "8 work blocks — packed 10a–4p, conflict at 3p";
+const CAL_SUMMARY = "9 events — ⚠️ Nika Tutoring (12:15p) conflicts with work blocks 12:30–2:00p";
 const calEvents = [
-  { id:1, time:"10:00a", dur:"1h",   title:"Busy",      color:"#F4511E", prep:"Last quiet window before the day fills in — triage and intent before 10a." },
-  { id:2, time:"11:00a", dur:"30m",  title:"Busy",      color:"#F4511E" },
-  { id:3, time:"11:30a", dur:"2.5h", title:"Busy",      color:"#F4511E" },
-  { id:4, time:"2:00p",  dur:"30m",  title:"Busy",      color:"#F4511E" },
-  { id:5, time:"2:30p",  dur:"30m",  title:"Busy",      color:"#F4511E" },
-  { id:6, time:"3:00p",  dur:"30m",  title:"Tentative", color:"#E4C441", conflict:"3p conflict: 3 overlapping events (Tentative ×2, Busy ×1) — confirm which stands before the block." },
-  { id:7, time:"3:00p",  dur:"1h",   title:"Tentative", color:"#E4C441" },
-  { id:8, time:"3:00p",  dur:"1h",   title:"Busy",      color:"#F4511E" },
+  { id: 1, time: "10:00a", end: "10:30a", dur: "30m", title: "Work (Busy)", color: "#e07d31", prep: null, allDay: false },
+  { id: 2, time: "11:30a", end: "12:00p", dur: "30m", title: "Work (Busy)", color: "#e07d31", prep: null, allDay: false },
+  { id: 3, time: "12:15p", end: "2:15p", dur: "2h", title: "Nika Tutoring (Jen)", color: "#42d692", prep: "⚠️ Overlaps work blocks 12:30–2:00p. Confirm Jen's materials are ready before 12:15p.", allDay: false },
+  { id: 4, time: "12:30p", end: "1:30p", dur: "1h", title: "Work (Busy) ⚠️ conflict", color: "#e07d31", prep: "Overlaps Nika Tutoring — review if this needs rescheduling.", allDay: false },
+  { id: 5, time: "1:30p", end: "2:00p", dur: "30m", title: "Work (Busy) ⚠️ conflict", color: "#e07d31", prep: "Overlaps Nika Tutoring — review if this needs rescheduling.", allDay: false },
+  { id: 6, time: "2:00p", end: "3:00p", dur: "1h", title: "Work (Busy)", color: "#e07d31", prep: null, allDay: false },
+  { id: 7, time: "3:00p", end: "3:30p", dur: "30m", title: "Work (Busy)", color: "#e07d31", prep: null, allDay: false },
+  { id: 8, time: "3:30p", end: "4:00p", dur: "30m", title: "Work (Busy)", color: "#e07d31", prep: null, allDay: false },
+  { id: 9, time: "4:00p", end: "5:00p", dur: "1h", title: "Work (Busy)", color: "#e07d31", prep: null, allDay: false },
 ];
 const IS_MONDAY = false;
 const weekShape = [];
 
-// Systems health data
 const SYSTEMS_STATUS = "amber";
-const SYSTEMS_SUMMARY = "Two categories crossed systemic threshold this week: tool-scope (3×) and mcp-behavior (3×). April 1 alone generated 8 errors — matching the entire prior 7-day total. Vault healthy (Apr 1, 5:00a, Drive: ok).";
-const ERROR_COUNT_24H = 8;
-const ERROR_COUNT_7D = 14;
+const SYSTEMS_SUMMARY = "Error rate spiked — 8 errors in 7 days vs 2 prior week. Three categories recurring at 2 each: tool-scope, mcp-behavior, api-contract. bold-peaceful-bardeen cascade (3 errors) notable.";
+const ERROR_COUNT_24H = 7;
+const ERROR_COUNT_7D = 8;
 const PRIORITY_ACTION = {
-  title: "mcp-behavior: edit_file schema confusion — 3rd repeat",
-  fix: "mcp__filesystem__edit_file uses edits:[{oldText,newText}]. Built-in Edit uses old_string/new_string. Same op, different param names. Add to agent-engineering.md — cuts future instances to zero.",
-  impact: "~5 min saved per instance avoided",
+  title: "Pre-deploy JSX hook validation",
+  fix: "Before chunk deploy: grep 'useEffect|useRef|useCallback|useMemo' in JSX vs import line. Prevents blank production page.",
+  impact: "~45 min saved per blank-page incident (brave-amazing-tesla cost)",
 };
 const errorTrends = [
-  { label:"tool-scope",       count7d:3, direction:"up", detail:"Edit/Bash called on Mac paths instead of mcp__filesystem__. Rule exists in CLAUDE.md but not firing at session start consistently.", fix:"Before any file op: verify context. Mac paths (/Users/davenichols/) → mcp__filesystem__. Sandbox paths → Edit/Bash." },
-  { label:"mcp-behavior",     count7d:3, direction:"up", detail:"Two identical edit_file schema errors (same mistake 3× total) + one Chrome JS session-level failure.", fix:"mcp__filesystem__edit_file: edits:[{oldText,newText}]. Built-in Edit: old_string/new_string. Write the note to agent-engineering.md." },
-  { label:"network-browser",  count7d:2, direction:"up", detail:"Chrome JS fetch() blocked by CSP on non-Google domains. Canonical fix: navigate to docs.google.com first.", fix:"For Chrome JS relay calls: navigate to docs.google.com tab. fetch() succeeds from Google domain." },
+  { label: "tool-scope", count7d: 2, direction: "up", detail: "Edit/Bash tools used on Mac filesystem paths. CLAUDE.md explicitly prohibits this — avoidable.", fix: "Always use mcp__filesystem__* for /Users/davenichols/ paths. Edit and Bash are sandbox-scoped." },
+  { label: "mcp-behavior", count7d: 2, direction: "up", detail: "MCP param type errors + Chrome JS session failures. Mixed root causes.", fix: "Always pass array/object params as native JSON, not quoted strings. If Chrome JS fails, try sandbox curl as fallback." },
+  { label: "api-contract", count7d: 2, direction: "up", detail: "Wrong relay action names and urllib double-fetch bug. Relay API pattern still fragile.", fix: "Use subprocess curl with --max-redirs 0 for relay calls from Python. Check prior handoffs for relay action names before guessing." },
 ];
 
-// Tips data
-const TIPS_LABEL = "10 tips · 0402.0332";
+const TIPS_LABEL = "10 tips scored";
 const tips = [
-  { id:1, score:88, category:"Dave-actionable-workflow", headline:"Agent creation: stub a specialist morning-briefing agent", detail:"The morning dashboard task is already a repeatable autonomous session pattern. Naming a reusable 'morning-briefing agent' stub — with a standard prompt template and tool list — would make dispatch faster and reduce cold-start friction each run. Agent creation is the theme this cycle.", action:"Open a session: 'Design a reusable morning-briefing agent stub. What should its identity line, tool list, and CLAUDE.md bootstrap section look like?'", sessionPrompt:"Design a reusable morning-briefing agent stub. What should its identity line, tool list, and CLAUDE.md bootstrap section look like?" },
-  { id:2, score:86, category:"Dave-actionable-workflow", headline:"Context persistence: create an AI Consulting Project for sprint canon", detail:"Consulting threads are spread across Claude, Finance, and jen-config. A dedicated 'AI Consulting' Project carrying positioning, pricing, and sprint status eliminates the re-read overhead on every consulting session. Context-persistence is the theme this cycle.", action:"Create an 'AI Consulting' Project. Add positioning statement, $20-35K pricing anchor, primary verticals, and 90-day sprint status as project instructions.", sessionPrompt:"I want to create an AI Consulting project in Claude. Help me draft project instructions: positioning, pricing anchor ($20-35K audit), target verticals, and 90-day sprint status." },
-  { id:3, score:85, category:"Dave-actionable-workflow", headline:"Session restart planning: draft one-sentence starters for heavy skills", detail:"Handoff, Bible, and Skill Manager all have complex state that slows session starts. A single-sentence restart prompt per skill — the exact phrase to say to a fresh session — cuts 2-3 min of cold-start friction per use. Restart-planning is the theme this cycle.", action:"Draft one-sentence restart prompts for Handoff, Bible, and Skill Manager. Store them in CLAUDE.md or the skills themselves.", sessionPrompt:"Help me draft one-sentence restart prompts for my Handoff, Bible, and Skill Manager skills — something I can say to a fresh session to load the right context in one tool call." },
-  { id:4, score:84, category:"Dave-actionable-data", headline:"Systemic mcp-behavior error — one note to agent-engineering.md fixes it", detail:"mcp__filesystem__edit_file schema confusion recurred 3 times this week (same mistake). A single line in agent-engineering.md — edits:[{oldText,newText}] vs old_string/new_string (built-in Edit) — is a 5-minute write with direct measurable impact. Most actionable fix this run.", action:"Open a session and say: 'Write the mcp__filesystem__edit_file schema disambiguation to agent-engineering.md now.'", sessionPrompt:"Write the mcp__filesystem__edit_file schema disambiguation to agent-engineering.md. Key: edits:[{oldText,newText}] (MCP). Contrast: old_string/new_string (built-in Edit tool). Include an example of each." },
-  { id:5, score:82, category:"Dave-actionable-strategy", headline:"Consulting sprint day 7: first external contact unlocks everything downstream", detail:"Day 7 of the 90-day sprint, zero revenue-facing contact. Tooling is mature (vault, dispatch, dashboard, CQR all stable). The next move is one sentence to one energy-sector contact. Not a pitch — a curiosity question about their AI deployment timeline is enough to open a thread.", action:"Identify one energy-sector contact. Draft one sentence. Send today.", sessionPrompt:"I'm on day 7 of my 90-day AI consulting sprint. Help me draft a one-sentence outreach to an energy-sector contact — genuine curiosity about their AI plans, not a pitch." },
-  { id:6, score:80, category:"Dave-actionable-workflow", headline:"5 active threads show resolved signals — triage pass before 10a", detail:"relay v5 deploy, task config portability, tip ratings filter, morning dashboard cal fix (proc.md now fixed), and dashboard blank page fix (resolved March 31) all have 'complete' or 'verified' language. Integrating them cleans up auto-pickup for every future session.", action:"Say: 'I want to do a thread triage pass on these 5 threads: tender-determined-bardeen, stoic-quirky-planck, funny-sleepy-shannon, sleepy-keen-planck, brave-amazing-tesla.'", sessionPrompt:"I want to do a quick thread triage pass. Review these 5 threads and mark resolved ones integrated: tender-determined-bardeen, stoic-quirky-planck, funny-sleepy-shannon, sleepy-keen-planck, brave-amazing-tesla." },
-  { id:7, score:78, category:"Dave-actionable-data", headline:"CD maturity April 11 — 9 days out, allocation decision window closing", detail:"$241.4K across two CDs matures April 11 and April 14 (relaxed-confident-hawking). The allocation plan is sketched and a calendar event is set, but the branch decision (reinvest T-bills vs redirect equities) hasn't been locked. 9-day window tightening.", action:"Re-read the relaxed-confident-hawking handoff and confirm the two allocation branches. Set a decision deadline.", sessionPrompt:"pickup relaxed-confident-hawking" },
-  { id:8, score:76, category:"Housekeeping", headline:"21 active threads — index triage keeps auto-pickup fast", detail:"With 21 threads, auto-pickup scans the full index on every session start. The 5 resolvable threads above + any superseded ones add noise. A 10-minute triage pass now pays back 15 seconds on every future session start for months.", action:"After morning triage: run a broader thread sweep to mark any integrated/dead threads from the March 26-30 sprint.", sessionPrompt:"I want to do a handoff index triage sweep. Show me all active threads older than 5 days and help me decide: integrate, park, or keep active." },
-  { id:9, score:74, category:"Confirmatory", headline:"Dashboard running cleanly — V006, all sections live, TIP_DATE 0402.0332", detail:"Second successful full morning dashboard run. All sections rendered: Calendar (8 events, conflict flagged), Systems (amber, 2 systemics), Tips (10), Skills, Threads (21), Intent, Goal Anchor (4%), Signals, Meta. Chunk pipeline deployed. No blank page.", action:null },
-  { id:10, score:73, category:"Housekeeping", headline:"Jen setup day: runbook is ready, only blocker is calendar time", detail:"7 build sessions complete, manifest v2.5.3, all Drive docs verified, runbook V004 clean (relaxed-elegant-maxwell). Nothing more to build. The only step is 30-45 minutes at Jen's Windows machine. Book it while the week is fresh.", action:"Block 45 min on your calendar with Jen. Open with: 'pickup relaxed-elegant-maxwell'", sessionPrompt:"pickup relaxed-elegant-maxwell" },
+  {
+    id: 1, score: 90, category: "Dave-actionable-strategy",
+    headline: "Utility AI talent gap is your entry point — 61% of execs name it as barrier #1",
+    detail: "Fresh from today's sector scan: 61% of utility executives cite AI talent as their top deployment barrier. This directly validates your AI & DevOps Readiness Audit positioning. Frame it as: 'I help utilities build the internal AI-ready teams your infrastructure investments require.' Credibility-building, timely, verifiable.",
+    action: "Draft a 2-sentence LinkedIn DM to an energy operations contact using this data point as the hook.",
+    sessionPrompt: "Help me draft a 2-sentence LinkedIn message to an energy sector operations leader. Positioning: AI readiness audit for utilities facing talent gaps. Use the stat: 61% of utility execs cite AI talent as their #1 deployment barrier (EPRI/Utility Dive 2026).",
+  },
+  {
+    id: 2, score: 87, category: "Dave-actionable-workflow",
+    headline: "3 threads have completion signals — close them in 5 minutes",
+    detail: "Relay v5 deploy (summary: 'deployed and verified live'), task config portability done (summary: 'all 6 items complete'), and filename convention update (summary: 'CLAUDE.md updated') all have clear completion language in their handoff summaries. These don't need pickups — just integration. 5-minute triage eliminates 3 entries from auto-pickup scanning.",
+    action: "In your next session, say: 'Mark relay v5 deploy, task config portability done, and filename convention update as integrated.'",
+    sessionPrompt: "I want to mark these threads as integrated: relay v5 deploy, task config portability done, filename convention update. Check their summaries and confirm each is complete, then update the handoff index.",
+  },
+  {
+    id: 3, score: 85, category: "Dave-actionable-data",
+    headline: "Error rate spiked 3× this week — three recurring categories forming",
+    detail: "Prior review showed 2 errors in 7 days. This review found 8, with tool-scope, mcp-behavior, and api-contract each at 2 instances. No systemic category yet (3+ required) but the acceleration is notable. The most avoidable pattern: tool-scope (Edit/Bash on Mac paths) — covered by a CLAUDE.md rule that sessions are still ignoring.",
+    action: "At the start of your first work session today: read the error-log.md entries from this week and note the tool-scope pattern explicitly.",
+    sessionPrompt: "Review error-log.md entries from the past 7 days. Summarize the patterns and tell me which are most avoidable given existing CLAUDE.md rules.",
+  },
+  {
+    id: 4, score: 84, category: "Dave-actionable-workflow",
+    headline: "Skill deploy binding rule is live — but 5 skills still need the bootstrap update",
+    detail: "The stoic-clever-carson rule is now in CLAUDE.md: always use 'skill deploy' for source file pushes. The gap: pensive-sharp-mccarthy confirmed family-calendar is missing from Drive, and vigilant-brave-edison picked up the remaining 4 (handoff/session/book-bible/cartography) but was cut short. The 'skill bootstrap remaining 5' thread is loaded and ready.",
+    action: "Say 'pickup skill bootstrap remaining 5' to finish the 5 outstanding deploys — each takes ~2 minutes via skill deploy.",
+    sessionPrompt: "pickup skill bootstrap remaining 5",
+  },
+  {
+    id: 5, score: 88, category: "Dave-actionable-workflow",
+    headline: "Parallel dispatch: if tasks don't share outputs, fire them simultaneously",
+    detail: "Agent dispatch V0 is in production for compression-guard continuation, but parallel dispatch is also authorized for regular sessions. The test: 'Does task B need task A's output?' If no, run both at once. Your current deep sessions — reading 8 files, fetching calendar, running web searches — could all be parallelized. Single-hop parallel work recovers 30–50% of session time on dense tasks like this morning's dashboard run.",
+    action: "Next dense session: identify 3 independent tasks and fire them in one message rather than sequentially.",
+    sessionPrompt: "Show me which of my current pending work items could be executed in parallel rather than sequentially. Pick the 3 most independent and propose a parallel dispatch plan.",
+  },
+  {
+    id: 6, score: 80, category: "Dave-actionable-workflow",
+    headline: "Family Research has active threads but no Project — canon gets re-read every session",
+    detail: "The handoff index shows two Family Research threads (charlie-nichols integrated, nichols-occupations-military loaded). Every new genealogy session has to re-read the handoff for names, dates, and research questions. A Family Research Project with a context doc seeded from the current handoffs would carry the canon automatically, eliminating the re-read overhead.",
+    action: "In Cowork, create a 'Family Research' Project and draft a context doc with key names (Charlie Nichols, Pauline Goolsby, Virgil branch), key dates, and the open research questions from the loaded handoff.",
+    sessionPrompt: "Help me create a Family Research Project in Cowork. Draft the project context document with key people, dates, military records, and open research questions from my handoff files.",
+  },
+  {
+    id: 7, score: 78, category: "Dave-actionable-workflow",
+    headline: "Session skill: prior design exists in skill-relay-pipeline handoff — here's where it stands",
+    detail: "You started a session skill design earlier this week (adoring-eloquent-hawking handoff: 'Drive queue + Jen dashboard callout + skill-manager Step 9'). Currently: no SKILL.md exists, no .skill package built. The design is scoped but was blocked on jen-config stabilizing. Jen-config is now effectively complete (all blockers cleared via loving-busy-newton). The session skill is the next natural creative build — no urgency, just a slow-burn parallel track.",
+    action: "No action needed today. This is awareness context. When you have a 90-minute window after Jen's setup day, say: 'pickup skill relay pipeline' to review the design.",
+    sessionPrompt: "pickup skill relay pipeline",
+  },
+  {
+    id: 8, score: 74, category: "Dave-actionable-data",
+    headline: "April 11 CD maturity is 10 days out — confirm the allocation path from the handoff",
+    detail: "The relaxed-confident-hawking session ran an independent analysis of the $241.4K in CDs maturing April 11+14. A plan was sketched and a calendar event set. The question is whether you still agree with that plan — a 10-minute re-read and confirmation prevents a day-of scramble when the CD actually matures.",
+    action: "Say 'pickup treasury ladder april execution' to review the allocation plan and note whether you confirm or want to adjust.",
+    sessionPrompt: "pickup treasury ladder april execution",
+  },
+  {
+    id: 9, score: 72, category: "Housekeeping",
+    headline: "24 active/loaded threads — finance freedom number and cal skill MVP are approaching stale",
+    detail: "Finance freedom number (6 days old) and cal skill MVP refinement (5 days) both approach the 7-day stale threshold. Neither is closeable without a pickup, but both should be explicitly status-checked this week rather than silently aging. Finance thread has strong completion context; cal skill has 7 scoped items.",
+    action: "Before starting new work this week: 'pickup finance freedom number' and decide: continue, park, or defer.",
+    sessionPrompt: "pickup finance freedom number — show me the state and help me decide: close, continue, or park.",
+  },
+  {
+    id: 10, score: 68, category: "Confirmatory",
+    headline: "This dashboard is the patched version — all magical-festive-newton fixes applied",
+    detail: "Yesterday's dashboard patches deployed successfully: clipboard copy buttons work, TIP_DATE format upgraded to MMDD.HHMM (you're seeing 0401.0332 above), skills section corrected to exactly 6 skills, and FooterBar replaces the old chips. The bold-focused-dirac overhaul is integrated. Morning.futureishere.net is the live production dashboard.",
+    action: "No action needed — just confirmation that the dashboard you're reading is the fully patched version.",
+    sessionPrompt: "Open morning.futureishere.net and confirm the current dashboard is rendering. Check that TIP_DATE shows 0401 prefix and the clipboard buttons work.",
+  },
 ];
 
-// Skills progress — dynamic fields only. Static metadata lives in SKILLS_META in the component section.
 const SKILLS_PROGRESS = [
-  { name:"Calendar",      level:"Maturing", trend:"→" },
-  { name:"Handoff",       level:"Stable",   trend:"↑" },
-  { name:"Bible",         level:"Stable",   trend:"→" },
-  { name:"Cartography",   level:"Early",    trend:"→" },
-  { name:"Skill Manager", level:"Stable",   trend:"↑" },
-  { name:"Session",       level:"Early",    trend:"→" },
+  { name: "Calendar",      level: "Stable",   trend: "→" },
+  { name: "Handoff",       level: "Stable",   trend: "↑" },
+  { name: "Bible",         level: "Stable",   trend: "→" },
+  { name: "Cartography",   level: "Early",    trend: "→" },
+  { name: "Skill Manager", level: "Maturing", trend: "↑" },
+  { name: "Session",       level: "Early",    trend: "→" },
 ];
 
-// ─── Thread Pulse ────────────────────────────────────────────────────────────
 const threads = [
-  { title:"Finance freedom number",            project:"Finance",      status:"active", ageLabel:"7d",    stale:false, summary:"Freedom Number ($2.98M), 4 scenarios, interaction rules, skills baseline",         pickupCmd:"pickup compassionate-hopeful-cori" },
-  { title:"Cal skill MVP refinement",          project:"Family Cal",   status:"active", ageLabel:"6d",    stale:false, summary:"Cal skill MVP — preview pipeline broken, workaround found (persistent HTML)",       pickupCmd:"pickup fervent-friendly-darwin" },
-  { title:"Filename convention update",        project:"Claude",       status:"active", ageLabel:"3d",    stale:false, summary:"V###-YYYYMMDD.HHMM naming rule updated in CLAUDE.md",                              pickupCmd:"pickup stoic-eager-gauss" },
-  { title:"Jen setup day execution",           project:"jen-config",   status:"active", ageLabel:"3d",    stale:false, summary:"Setup day runbook ready — pick up on Jen's Windows machine",                        pickupCmd:"pickup sweet-practical-brahmagupta" },
-  { title:"Relay v5 deploy",                   project:"Claude",       status:"active", ageLabel:"3d",    stale:false, summary:"Apps Script relay v5 deployed and verified live",                                   pickupCmd:"pickup tender-determined-bardeen" },
-  { title:"Quality gate production upgrade",   project:"Claude",       status:"active", ageLabel:"3d",    stale:false, summary:"10 production upgrade opportunities catalogued",                                     pickupCmd:"pickup loving-trusting-maxwell" },
-  { title:"Task config portability done",      project:"Claude",       status:"active", ageLabel:"3d",    stale:false, summary:"Two-tier JSON config built for morning-dashboard + morning-error-review",            pickupCmd:"pickup stoic-quirky-planck" },
-  { title:"Morning dashboard cal fix",         project:"Dashboard",    status:"active", ageLabel:"2d",    stale:false, summary:"gcal empty-result bug diagnosed — proc.md fixed with explicit params",              pickupCmd:"pickup sleepy-keen-planck" },
-  { title:"Dashboard blank page fix",          project:"Claude",       status:"active", ageLabel:"2d",    stale:false, summary:"Emergency fix resolved (missing useEffect import) — commit 355d6e04",               pickupCmd:"pickup brave-amazing-tesla" },
-  { title:"Treasury ladder April execution",   project:"Finance",      status:"active", ageLabel:"2d",    stale:false, summary:"CD maturities Apr 11+14 ($241.4k), plan sketched, calendar set",                   pickupCmd:"pickup relaxed-confident-hawking" },
-  { title:"Tip ratings + actionable filter",   project:"Claude",       status:"active", ageLabel:"2d",    stale:false, summary:"3 tip ratings logged, Dave-actionable filter added to proc.md",                    pickupCmd:"pickup funny-sleepy-shannon" },
-  { title:"Dashboard patches deployed",        project:"Dashboard",    status:"active", ageLabel:"2d",    stale:false, summary:"All clipboard + TIP_DATE patches applied, all 5 new blocks live",                  pickupCmd:"pickup magical-festive-newton" },
-  { title:"Error taxonomy CORS",               project:"Claude",       status:"active", ageLabel:"2d",    stale:false, summary:"CORS errors wired into learning system — taxonomy, L-008, morning review scan",     pickupCmd:"pickup intelligent-epic-cerf" },
-  { title:"Chrome tab cleanup rule",           project:"Claude",       status:"active", ageLabel:"1d",    stale:false, summary:"Chrome tab cleanup rule added to CLAUDE.md + handoff v1.9.5 deployed",              pickupCmd:"pickup charming-upbeat-bohr" },
-  { title:"Jen setup day — ready to execute",  project:"jen-config",   status:"active", ageLabel:"1d",    stale:false, summary:"Consolidated handoff — manifest v2.5.3, V4.2.0, all blockers cleared",              pickupCmd:"pickup relaxed-elegant-maxwell" },
-  { title:"Manifest v1.5.0 close gaps",        project:"jen-config",   status:"active", ageLabel:"1d",    stale:false, summary:"Skill relay + JSX/config.json gaps closed — manifest.json v1.5.0",                 pickupCmd:"pickup wizardly-pensive-rubin" },
-  { title:"Skill token optimization done",     project:"Claude",       status:"active", ageLabel:"1d",    stale:false, summary:"All 6 phases executed — 15.5KB saved from SKILL.md stubs",                        pickupCmd:"pickup elegant-determined-euler" },
-  { title:"Session archive Drive fix",         project:"Claude",       status:"active", ageLabel:"today", stale:false, summary:"First archive run complete locally — Drive upload blocked, relay fix needed",       pickupCmd:"pickup adoring-epic-gates" },
-  { title:"Nichols occupations military",      project:"Family Res",   status:"loaded",  ageLabel:"3d",    stale:false, summary:"WWII draft registrations, Hawkins Cemetery military check, Virgil Nichols branch", pickupCmd:"pickup sharp-eager-knuth" },
-  { title:"Skill relay pipeline",              project:"Claude",       status:"loaded",  ageLabel:"3d",    stale:false, summary:"Drive queue + Jen morning dashboard callout designed, Drive uploads pending",       pickupCmd:"pickup adoring-eloquent-hawking" },
-  { title:"Drive doc repair auto",             project:"jen-config",   status:"loaded",  ageLabel:"2d",    stale:false, summary:"Automate Drive doc repair via Chrome JS + Google Docs API",                        pickupCmd:"pickup funny-zen-faraday" },
+  { title: "finance freedom number", project: "Finance", status: "active", ageLabel: "6d", summary: "Freedom Number ($2.98M), 4 timeline scenarios, interaction rules built", pickupCmd: "pickup finance freedom number", stale: false },
+  { title: "cal skill MVP refinement", project: "family-cal", status: "active", ageLabel: "5d", summary: "7 items scoped, preview pipeline workaround found", pickupCmd: "pickup cal skill MVP refinement", stale: false },
+  { title: "filename convention update", project: "Claude", status: "active", ageLabel: "2d", summary: "V###-YYYYMMDD.HHMM updated in CLAUDE.md — appears complete", pickupCmd: "pickup filename convention update", stale: false },
+  { title: "skill token optimization hop 2", project: "Claude", status: "active", ageLabel: "2d", summary: "Phase 0+1 done. 4 shards still pending write.", pickupCmd: "pickup skill token optimization hop 2", stale: false },
+  { title: "jen setup day execution", project: "jen-config", status: "active", ageLabel: "2d", summary: "All blockers cleared. Needs Jen's Windows machine.", pickupCmd: "pickup jen setup day execution", stale: false },
+  { title: "relay v5 deploy", project: "Claude", status: "active", ageLabel: "2d", summary: "Apps Script relay v5 deployed and verified live — closeable", pickupCmd: "pickup relay v5 deploy", stale: false },
+  { title: "quality gate production upgrade", project: "Claude", status: "active", ageLabel: "2d", summary: "10 production upgrades catalogued, ready to execute.", pickupCmd: "pickup quality gate production upgrade", stale: false },
+  { title: "task config portability done", project: "Claude", status: "active", ageLabel: "2d", summary: "All 6 items complete — closeable", pickupCmd: "pickup task config portability done", stale: false },
+  { title: "morning dashboard cal fix", project: "Claude", status: "active", ageLabel: "1d", summary: "GCal empty-result bug fixed, proc.md updated, FooterBar added", pickupCmd: "pickup morning dashboard cal fix", stale: false },
+  { title: "dashboard blank page fix", project: "Claude", status: "active", ageLabel: "1d", summary: "Emergency fix deployed — Mar 31 backup live, bundle clean", pickupCmd: "pickup dashboard blank page fix", stale: false },
+  { title: "treasury ladder april execution", project: "Finance", status: "active", ageLabel: "1d", summary: "$241.4K maturing Apr 11+14, plan sketched, calendar event set", pickupCmd: "pickup treasury ladder april execution", stale: false },
+  { title: "tip ratings + actionable filter", project: "Claude", status: "active", ageLabel: "1d", summary: "3 tip ratings logged, Dave-actionable filter added to proc.md", pickupCmd: "pickup tip ratings + actionable filter", stale: false },
+  { title: "dashboard patches deployed", project: "morning-dashboard", status: "active", ageLabel: "1d", summary: "All clipboard + TIP_DATE patches applied and verified", pickupCmd: "pickup dashboard patches deployed", stale: false },
+  { title: "error taxonomy cors", project: "Claude", status: "active", ageLabel: "1d", summary: "CORS pattern wired into learning system — taxonomy + L-008 + LEARNING-OPS", pickupCmd: "pickup error taxonomy cors", stale: false },
+  { title: "skill deploy rule", project: "Claude", status: "active", ageLabel: "1d", summary: "Binding CLAUDE.md rule: always use skill deploy for source files", pickupCmd: "pickup skill deploy rule", stale: false },
+  { title: "skill deploy safety rule", project: "Claude", status: "active", ageLabel: "1d", summary: "Handoff v1.9.1 + family-calendar v2.1.2 deployed; Document Write Safety rule added", pickupCmd: "pickup skill deploy safety rule", stale: false },
+  { title: "session skill tip rotation", project: "Claude", status: "active", ageLabel: "today", summary: "Session skill tip 3-theme rotation added to morning dashboard", pickupCmd: "pickup session skill tip rotation", stale: false },
+  { title: "vault readme github push", project: "Claude", status: "active", ageLabel: "today", summary: "iCloud vault done; GitHub README push blocked (sandbox 403) — needs Chrome JS", pickupCmd: "pickup vault readme github push", stale: false },
+  { title: "skills bootstrap deploy verify", project: "Claude", status: "active", ageLabel: "today", summary: "family-calendar MISSING from Drive; 4 others unverified", pickupCmd: "pickup skills bootstrap deploy verify", stale: false },
+  { title: "skill relay pipeline", project: "Claude", status: "loaded", ageLabel: "2d", summary: "Drive queue + Jen dashboard callout designed; Drive uploads pending", pickupCmd: "pickup skill relay pipeline", stale: false },
+  { title: "nichols occupations military backwards", project: "Family Research", status: "loaded", ageLabel: "2d", summary: "Corrected John Thomas lineage, Pauline's 4 kids confirmed, Virgil branch ID'd", pickupCmd: "pickup nichols occupations military backwards", stale: false },
+  { title: "skill pipeline gap analysis", project: "Claude", status: "loaded", ageLabel: "today", summary: "5 ranked deployment pipeline gaps identified by expert critique", pickupCmd: "pickup skill pipeline gap analysis", stale: false },
+  { title: "skill bootstrap remaining 5", project: "Claude", status: "loaded", ageLabel: "today", summary: "skill-manager v1.3.1 deployed. 5 skills still need bootstrap update + deploy.", pickupCmd: "pickup skill bootstrap remaining 5", stale: false },
+  { title: "setup day blockers cleared", project: "jen-config", status: "loaded", ageLabel: "1d", summary: "skill-manager v1.3.0 on Drive. All setup day blockers resolved.", pickupCmd: "pickup setup day blockers cleared", stale: false },
 ];
-const THREAD_COUNT = 21;
+const THREAD_COUNT = 24;
 const THREAD_STALE_COUNT = 0;
 
-// ─── Morning Intent ──────────────────────────────────────────────────────────
 const morningIntent = [
-  { rank:1, text:"Your day is booked solid from 10a. Do triage and intent review now — this is the last quiet window before the schedule locks in.", source:"calendar", pickupCmd:"I want to do a quick thread triage before my 10am block. Show me the 3 most actionable threads to close or advance in the next 20 minutes." },
-  { rank:2, text:"21 active threads with 5 showing resolved signals. A 5-minute integration pass now makes every future session faster.", source:"threads", pickupCmd:"I want to triage these 5 threads for integration: tender-determined-bardeen, stoic-quirky-planck, funny-sleepy-shannon, sleepy-keen-planck, brave-amazing-tesla." },
-  { rank:3, text:"Day 7 of the 90-day sprint. Tooling is mature. The unlock is one sentence to one energy-sector contact.", source:"goal", pickupCmd:"I'm on day 7 of my 90-day AI consulting sprint. Help me draft a one-sentence outreach to an energy-sector contact — genuine curiosity, not a pitch." },
+  {
+    rank: 1,
+    text: "Nika Tutoring starts at 12:15p — confirm Jen's materials are ready and check whether the 12:30–2:00p work busy blocks are real meetings or placeholder blocks that can flex.",
+    source: "calendar",
+    pickupCmd: "cal next — show me today's events in detail and flag any conflicts.",
+  },
+  {
+    rank: 2,
+    text: "Close 3 completed threads: relay v5 deploy, task config portability done, and filename convention update all have completion language in their summaries — mark them integrated to clean up auto-pickup scanning.",
+    source: "threads",
+    pickupCmd: "I want to mark these threads as integrated: relay v5 deploy, task config portability done, filename convention update. Check their summaries and confirm each is complete.",
+  },
+  {
+    rank: 3,
+    text: "90-day sprint day 6: use today's consulting signal (61% of utilities cite AI talent as top barrier) to draft one prospecting message for an energy-sector contact.",
+    source: "goal",
+    pickupCmd: "Help me draft a 2-sentence LinkedIn outreach message to an energy sector operations leader. Use this hook: 61% of utility executives cite AI talent gap as their #1 AI deployment barrier in 2026.",
+  },
 ];
 
-// ─── Consulting Signals ───────────────────────────────────────────────────────
-const CONSULT_SIGNAL_DATE = "Apr 2";
 const consultSignals = [
-  { headline:"Utility AI talent gap is the #1 deployment barrier — 61% of execs name it", why:"EPRI/Utility Dive data directly validates the $20-35K AI Readiness Audit positioning: 'I help utilities build AI-ready teams for the infrastructure investments they're already making.'", source:"EPRI / Utility Dive · Apr 2026" },
-  { headline:"Grid modernization RFPs increasingly embedding AI readiness requirements", why:"Procurement language is shifting — utilities adding AI criteria to capital RFPs. Early indicator that AI readiness documentation becomes a compliance input, not just strategic.", source:"Utility Dive · Apr 2026" },
-  { headline:"Enterprise agentic AI adoption hitting ops teams first in 2026", why:"Agentic workflows landing in operations before strategy (predictive maintenance, outage response, demand forecasting). Ops-first entry gives an auditor a concrete, measurable beachhead.", source:"McKinsey / Deloitte AI Signals · Apr 2026" },
+  {
+    headline: "61% of utility executives cite AI talent gap as their #1 AI deployment barrier",
+    why: "This directly validates the $20-35K AI Readiness Audit positioning. Frame it as: 'I help utilities build AI-ready teams to execute the infrastructure investments they're already making.'",
+    source: "Utility Dive / EPRI 2026 Utilities & AI Survey",
+  },
+  {
+    headline: "DOE launches Speed to Power initiative to accelerate grid infrastructure for AI data centers",
+    why: "Federal urgency around grid AI creates consulting entry points at utility + integrator level. Use as a conversation-opener: 'How is your organization positioning for the federal grid AI push?'",
+    source: "U.S. Department of Energy",
+  },
+  {
+    headline: "Workflow redesign is the #1 factor linked to measurable AI ROI in 2026 (Deloitte State of AI)",
+    why: "Validates execution-oriented consulting framing. Enterprises don't need more AI strategy — they need workflow transformation. Your practice positioning is aligned with where the ROI data points.",
+    source: "Deloitte State of AI in the Enterprise 2026",
+  },
 ];
+const CONSULT_SIGNAL_DATE = "2026-04-01";
 
-// ─── Goal Anchor ────────────────────────────────────────────────────────────
 const goalAnchor = {
-  label:"AI Consulting Practice",
-  target:"First paying engagement",
-  milestone:"90-day sprint: tooling → outreach → first client",
-  elapsedPct:4,
-  horizonLabel:"Sep 2026",
+  label: "AI Consulting Practice",
+  target: "First paying engagement",
+  milestone: "90-day sprint: tooling → outreach → first client",
+  elapsedPct: 3,
+  horizonLabel: "Sep 2026",
 };
 
-// ─── Monday Scorecard ───────────────────────────────────────────────────────
 const mondayScorecard = null;
 
-// ─── Dashboard Meta ──────────────────────────────────────────────────────────
-const dashboardMeta = {
-  version:"V006-20260401",
-  changelog:[
-    { date:"2026-04-01", type:"added",   item:"Dashboard Meta block",   note:"Self-documenting: block inventory, changelog, and next-evolution ideas with copy prompts. Freedom-to-evolve authorized." },
-    { date:"2026-03-28", type:"added",   item:"Morning Intent block",    note:"Synthesizes top 3 actionable priorities from all data sources. Replaced passive summary with action-oriented lead." },
-    { date:"2026-03-28", type:"added",   item:"Goal Anchor block",       note:"90-day sprint progress bar driven by goals.json. Gives the daily grind a horizon line." },
-    { date:"2026-03-28", type:"added",   item:"Consulting Signal block", note:"3 curated industry signals from targeted web searches, each connected to practice positioning." },
-    { date:"2026-03-27", type:"changed", item:"Calendar → sidebar",      note:"Shifted from main column to right sidebar so tips and threads get more vertical space." },
-    { date:"2026-03-26", type:"added",   item:"Thread Pulse block",      note:"Full thread list with age, project, stale flag, and copyable pickup commands." },
-    { date:"2026-03-25", type:"changed", item:"Tip ID copy added",       note:"Each tip gets a copyable ID for the tip-rating feedback loop." },
-    { date:"2026-03-24", type:"added",   item:"Monday Scorecard block",  note:"Weekly CQR analysis by domain, conditionally rendered on Mondays." },
-  ],
-  nextIdeas:[
-    { idea:"3-day momentum block", desc:"Yesterday's key action, today's primary move, what tomorrow unlocks. Makes sprint progress feel real even on slow days.", sessionPrompt:"I want to add a '3-day momentum' block to my morning dashboard. It should show: yesterday's key action, today's primary move, and what tomorrow unlocks. Draft the data schema and a React component that matches the dashboard's visual style." },
-    { idea:"Open decisions block", desc:"Decisions you're stalling on — not tasks, but binary choices. These get buried in threads and quietly stall real progress.", sessionPrompt:"I want to add an 'open decisions' block to my morning dashboard. It should surface decisions I'm waiting on myself to make — not tasks, but choices. Draft the data schema (sourced from handoff Pending/State sections) and a component matching the dashboard style." },
-    { idea:"Weekly rhythm view", desc:"Which day is deep work, outreach, Nika, rest. Puts each daily card in context of the week's intended shape.", sessionPrompt:"I want to add a weekly rhythm block to my morning dashboard showing my intended day-type for each day of the week (deep work / outreach / family / rest). Draft the data structure and a React component that matches the dashboard's visual style." },
-    { idea:"Signal talking-point layer", desc:"Each signal already has a 'why it matters' note. Add a one-sentence talking point ready to paste in outreach or a discovery call.", sessionPrompt:"Enhance the Consulting Signal section of my morning dashboard: each signal should include a ready-to-paste talking point I can use verbatim in outreach or a call. Update the ConsultingSignalSection component and dashboardMeta changelog to reflect this change." },
-  ],
-};
 
 // ═══════════════════════════════════════════════════════════════════════════
 // COMPONENT — Do not modify below this line.
@@ -215,6 +277,7 @@ const LEVEL_STYLE = {
   Stable:   { color: "#065f46", bg: "#d1fae5" },
 };
 
+// Source badge styles for Morning Intent
 const INTENT_SOURCE_STYLE = {
   threads:  { color: "#6366f1", bg: "#eef2ff" },
   calendar: { color: "#0284c7", bg: "#e0f2fe" },
@@ -234,6 +297,7 @@ const DASH_CSS = `
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
+    font-size: 115%;
   }
   .db-header {
     display: flex;
@@ -381,13 +445,36 @@ function RatingPanel({ tip, onClose }) {
   const [myScore, setMyScore] = useState("");
   const [comment, setComment] = useState("");
   const [copied, setCopied] = useState(false);
-  const cmdText = `tip rate ${TIP_DATE}-${String(tip.id).padStart(2,'0')} ${myScore || "?"}${comment ? ` "${comment}"` : ""}`;
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [sendErr, setSendErr] = useState(false);
+  const tipId = `${TIP_DATE}-${String(tip.id).padStart(2,'0')}`;
+  const cmdText = `tip rate ${tipId} ${myScore || "?"}${comment ? ` "${comment}"` : ""}`;
   const handleCopy = (e) => {
     if (e) e.stopPropagation();
-    const text = `tip rate ${TIP_DATE}-${String(tip.id).padStart(2,'0')} ${myScore}${comment ? ` "${comment}"` : ""}`;
-    copyText(text);
+    copyText(`tip rate ${tipId} ${myScore}${comment ? ` "${comment}"` : ""}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+  const handleSend = async (e) => {
+    if (e) e.stopPropagation();
+    if (!myScore) return;
+    setSending(true);
+    setSendErr(false);
+    try {
+      const res = await fetch("http://localhost:7878/tip-rate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tipId, score: Number(myScore), comment: comment || "", ts: new Date().toISOString() })
+      });
+      if (!res.ok) throw new Error("server error");
+      setSent(true);
+      setTimeout(() => onClose(), 1500);
+    } catch {
+      setSendErr(true);
+    } finally {
+      setSending(false);
+    }
   };
   return (
     <div style={{ padding: "10px 18px 12px 18px", background: C.ratingBg, borderTop: `1px solid ${C.ratingBorder}` }}>
@@ -397,9 +484,11 @@ function RatingPanel({ tip, onClose }) {
       </div>
       <div style={{ display: "flex", gap: 8, alignItems: "stretch", marginBottom: 8 }}>
         <input type="number" min="0" max="100" value={myScore} onChange={e => setMyScore(e.target.value)} placeholder="0–100" style={{ width: 64, padding: "6px 8px", fontFamily: F.mono, fontSize: 13, border: `1px solid ${C.ratingBorder}`, borderRadius: 6, background: "#fff", color: C.ink, outline: "none", flexShrink: 0 }} />
-        <input type="text" value={comment} onChange={e => setComment(e.target.value)} placeholder="Optional comment…" style={{ flex: 1, padding: "6px 10px", fontFamily: F.body, fontSize: 13, border: `1px solid ${C.ratingBorder}`, borderRadius: 6, background: "#fff", color: C.ink, outline: "none" }} />
-        <button onClick={handleCopy} disabled={!myScore} style={{ padding: "6px 14px", borderRadius: 6, border: "none", cursor: myScore ? "pointer" : "not-allowed", background: copied ? C.green : myScore ? "#6366f1" : C.surfaceAlt, color: myScore ? "#fff" : C.inkFaint, fontFamily: F.mono, fontSize: 12, fontWeight: 500, transition: "background 200ms ease", flexShrink: 0 }}>{copied ? "Copied!" : "Copy"}</button>
+        <input type="text" value={comment} onChange={e => setComment(e.target.value)} placeholder="Optional comment…" onKeyDown={e => { if (e.key === "Enter") handleSend(e); }} style={{ flex: 1, padding: "6px 10px", fontFamily: F.body, fontSize: 13, border: `1px solid ${C.ratingBorder}`, borderRadius: 6, background: "#fff", color: C.ink, outline: "none" }} />
+        <button onClick={handleSend} disabled={!myScore || sending || sent} style={{ padding: "6px 14px", borderRadius: 6, border: "none", cursor: myScore && !sending && !sent ? "pointer" : "not-allowed", background: sent ? C.green : sendErr ? "#ef4444" : myScore ? "#6366f1" : C.surfaceAlt, color: myScore ? "#fff" : C.inkFaint, fontFamily: F.mono, fontSize: 12, fontWeight: 500, transition: "background 200ms ease", flexShrink: 0 }}>{sent ? "✓ Sent" : sending ? "…" : sendErr ? "Retry" : "Send"}</button>
+        <button onClick={handleCopy} disabled={!myScore} style={{ padding: "6px 14px", borderRadius: 6, border: `1px solid ${C.ratingBorder}`, cursor: myScore ? "pointer" : "not-allowed", background: copied ? C.surfaceAlt : "transparent", color: myScore ? C.ink : C.inkFaint, fontFamily: F.mono, fontSize: 12, fontWeight: 500, flexShrink: 0 }}>{copied ? "✓" : "Copy"}</button>
       </div>
+      {sendErr && <div style={{ fontFamily: F.mono, fontSize: 11, color: "#ef4444", marginBottom: 6 }}>Server offline — use Copy to submit manually</div>}
       <div style={{ fontFamily: F.mono, fontSize: 11, color: myScore ? "#6366f1" : C.inkFaint, background: "#fff", border: `1px solid ${C.ratingBorder}`, borderRadius: 5, padding: "5px 10px", letterSpacing: "0.02em" }}>{cmdText}</div>
     </div>
   );
@@ -656,6 +745,7 @@ function SkillsCard() {
   );
 }
 
+// ─── Thread Pulse ─────────────────────────────────────────────────────────────
 function ThreadPulseSection() {
   const [copiedIdx, setCopiedIdx] = useState(null);
   const copy = (cmd, i, e) => {
@@ -699,6 +789,7 @@ function ThreadPulseSection() {
   );
 }
 
+// ─── Morning Intent ───────────────────────────────────────────────────────────
 function MorningIntentSection() {
   const [copiedIdx, setCopiedIdx] = useState(null);
   const copy = (cmd, i, e) => {
@@ -738,6 +829,7 @@ function MorningIntentSection() {
   );
 }
 
+// ─── Goal Anchor ──────────────────────────────────────────────────────────────
 function GoalAnchorCard() {
   const pct = Math.min(100, Math.max(0, goalAnchor.elapsedPct));
   return (
@@ -758,6 +850,7 @@ function GoalAnchorCard() {
   );
 }
 
+// ─── Consulting Signals ───────────────────────────────────────────────────────
 function ConsultingSignalSection() {
   return (
     <div style={sectionCard}>
@@ -780,98 +873,8 @@ function ConsultingSignalSection() {
   );
 }
 
-function DashboardMetaSection() {
-  const [view, setView] = useState("log");
-  const [copiedIdx, setCopiedIdx] = useState(null);
-  const copy = (text, i, e) => {
-    if (e) e.stopPropagation();
-    copyText(text);
-    setCopiedIdx(i);
-    setTimeout(() => setCopiedIdx(null), 1500);
-  };
-  const tabBtn = (id, label) => (
-    <button key={id} onClick={() => setView(id)} style={{ fontFamily: F.mono, fontSize: 10, padding: "2px 8px", borderRadius: 3, border: "none", cursor: "pointer", background: view === id ? C.ink : "transparent", color: view === id ? "#fff" : C.inkSoft, transition: "all 120ms ease" }}>{label}</button>
-  );
-  const TYPE_STYLE = {
-    added:   { color: C.green,    bg: C.greenPale },
-    changed: { color: C.amber,    bg: C.amberPale },
-    removed: { color: C.red,      bg: C.redPale   },
-    fixed:   { color: C.sageDark, bg: C.sagePale  },
-  };
-  const BLOCKS = [
-    { name: "Intent",         desc: "Top 3 synthesized priorities from threads, calendar, goals, and systems. Copyable session prompts for one-click action." },
-    { name: "Calendar",       desc: "Today's events with contextual prep nudges. Travel reminders, material checks, conflict flags. Monday adds week-shape view." },
-    { name: "Systems",        desc: "Error pattern analysis (24h, 7-day), vault health, compliance audit. Surfaces a single priority fix when actionable." },
-    { name: "Skills",         desc: "Maturity levels for 6 active Cowork skills: Calendar, Handoff, Bible, Cartography, Skill Manager, Session." },
-    { name: "Threads",        desc: "Active and loaded handoff threads with age, project, stale flag, and copyable pickup commands." },
-    { name: "Goal Anchor",    desc: "90-day sprint progress bar driven by goals.json — label, target, milestone, elapsed %." },
-    { name: "Signals",        desc: "3 curated AI/energy industry signals from web search. Each tied to a why-it-matters consulting frame." },
-    { name: "Mon Scorecard",  desc: "Weekly CQR averages by domain with trend arrows. Only renders on Mondays.", tag: "Mon" },
-    { name: "Dashboard Meta", desc: "This block. Changelog, block inventory, and next-evolution ideas with copyable session prompts.", tag: "new" },
-  ];
-  return (
-    <div style={sectionCard}>
-      <div style={sectionHeader}>
-        <span style={sectionLabel}>Dashboard</span>
-        <div style={{ display: "flex", gap: 3 }}>
-          {tabBtn("log", "log")}
-          {tabBtn("blocks", "blocks")}
-          {tabBtn("next", "next")}
-        </div>
-      </div>
-      {view === "log" && (
-        <div>
-          {dashboardMeta.changelog.map((entry, i) => {
-            const ts = TYPE_STYLE[entry.type] || TYPE_STYLE.fixed;
-            return (
-              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "8px 16px", borderBottom: i < dashboardMeta.changelog.length - 1 ? `1px solid ${C.border}` : "none" }}>
-                <span style={{ fontFamily: F.mono, fontSize: 9, color: ts.color, background: ts.bg, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.05em", flexShrink: 0, marginTop: 2 }}>{entry.type}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: F.body, fontSize: 12, fontWeight: 500, color: C.ink }}>{entry.item}</div>
-                  <div style={{ fontFamily: F.body, fontSize: 11, color: C.inkMid, lineHeight: 1.4, marginTop: 1 }}>{entry.note}</div>
-                </div>
-                <span style={{ fontFamily: F.mono, fontSize: 10, color: C.inkFaint, flexShrink: 0, marginTop: 2 }}>{entry.date.slice(5)}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {view === "blocks" && (
-        <div>
-          {BLOCKS.map((block, i) => (
-            <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", padding: "8px 16px", borderBottom: i < BLOCKS.length - 1 ? `1px solid ${C.border}` : "none" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                  <span style={{ fontFamily: F.display, fontSize: 12, fontWeight: 700, color: C.ink }}>{block.name}</span>
-                  {block.tag && <span style={{ fontFamily: F.mono, fontSize: 9, color: C.inkSoft, background: C.surfaceAlt, padding: "1px 5px", borderRadius: 3, border: `1px solid ${C.border}` }}>{block.tag}</span>}
-                </div>
-                <div style={{ fontFamily: F.body, fontSize: 11, color: C.inkMid, lineHeight: 1.4 }}>{block.desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      {view === "next" && (
-        <div>
-          {dashboardMeta.nextIdeas.map((idea, i) => {
-            const isCopied = copiedIdx === i;
-            return (
-              <div key={i} style={{ padding: "9px 16px", borderBottom: i < dashboardMeta.nextIdeas.length - 1 ? `1px solid ${C.border}` : "none" }}>
-                <div style={{ fontFamily: F.body, fontSize: 12, fontWeight: 500, color: C.ink, marginBottom: 3 }}>{idea.idea}</div>
-                <div style={{ fontFamily: F.body, fontSize: 11, color: C.inkMid, lineHeight: 1.4, marginBottom: 6 }}>{idea.desc}</div>
-                <button onClick={(e) => copy(idea.sessionPrompt, i, e)} style={{ padding: "2px 9px", borderRadius: 3, border: "none", cursor: "pointer", background: isCopied ? C.green : C.surfaceAlt, color: isCopied ? "#fff" : C.inkSoft, fontFamily: F.mono, fontSize: 10, fontWeight: 500, transition: "all 150ms ease" }}>{isCopied ? "✓ Copied" : "Copy"}</button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      <div style={{ padding: "5px 16px 8px", borderTop: `1px solid ${C.border}` }}>
-        <span style={{ fontFamily: F.mono, fontSize: 10, color: C.inkFaint }}>{dashboardMeta.version}</span>
-      </div>
-    </div>
-  );
-}
-
+// ─── Monday Scorecard ─────────────────────────────────────────────────────────
+// Only renders when IS_MONDAY and mondayScorecard is populated.
 function MondayScorecardSection() {
   if (!mondayScorecard || !mondayScorecard.length) return null;
   const sorted = [...mondayScorecard].sort((a, b) => b.lastWeekAvg - a.lastWeekAvg);
@@ -918,8 +921,8 @@ export default function MorningDashboard() {
       </div>
       <div className={`db-grid${IS_MONDAY ? " monday" : ""}`}>
         <div className="db-left">
-          <ThreadPulseSection />
           <TipsSection />
+          <ThreadPulseSection />
         </div>
         <div className="db-side">
           <CalendarSection />
@@ -930,7 +933,6 @@ export default function MorningDashboard() {
           <MorningIntentSection />
           <GoalAnchorCard />
           <ConsultingSignalSection />
-          <DashboardMetaSection />
         </div>
         {IS_MONDAY && mondayScorecard && (
           <div className="db-score">
