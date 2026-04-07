@@ -12,232 +12,206 @@ import { useState } from "react";
 // LIVE DATA — Claude replaces ONLY this section. Component code is frozen.
 // ═══════════════════════════════════════════════════════════════════════════
 
-const BRIEFING_DATE = "Monday, Apr 6";
-const BRIEFING_TIME = "1:41a";
-const TIP_DATE = "0406.0141"; // MMDD.HHMM — scopes tip IDs to a specific run: 0406.0141-01
+const BRIEFING_DATE = "Tuesday, Apr 7";
+const BRIEFING_TIME = "3:31a";
+const TIP_DATE = "0407.0331"; // MMDD.HHMM — scopes tip IDs to a specific run: 0407.0331-01
 const GREETING = "Good morning, Dave.";
 
 // Calendar data
-const CAL_SUMMARY = "3 events today";
+const CAL_SUMMARY = "3 events · Generator Repair 10a conflict";
 const calEvents = [
-  { id: 1, time: "9:00a", end: "10:00a", dur: "1h", title: "NCAA Tournament Championship", color: "#42d692", prep: null, allDay: false },
-  { id: 2, time: "12:00p", end: "1:00p", dur: "1h", title: "Kate in 🇺🇦 — need Dave's Zoom", color: "#42d692", prep: "Open Zoom app by 11:55a — Kate needs you logged in and ready.", allDay: false },
-  { id: 3, time: "9:00p", end: "9:45p", dur: "45m", title: "Jen therapy", color: "#42d692", prep: "Give Jen quiet space around 8:45p.", allDay: false },
+  { id: 1, time: "9:00a", end: "5:00p", dur: "8h", title: "Work — busy blocks all day", color: "#ffad46", prep: null, allDay: false },
+  { id: 2, time: "10:00a", end: "11:00a", dur: "1h", title: "Generator Repair", color: "#42d692", prep: "⚠ Overlaps work Busy 10-10:30a — confirm you're available before the tech arrives.", allDay: false, conflict: "Generator Repair (10a) overlaps work Busy block — confirm availability by 9:30a." },
+  { id: 3, time: "12:00p", end: "2:00p", dur: "2h", title: "Lena tutoring (Jen's)", color: "#42d692", prep: null, allDay: false },
 ];
-const IS_MONDAY = true;
-const weekShape = [
-  { day: "Mon", count: 3, flag: "busy" },
-  { day: "Tue", count: 2, flag: null },
-  { day: "Wed", count: 1, flag: null },
-  { day: "Thu", count: 0, flag: null },
-  { day: "Fri", count: 2, flag: null },
-  { day: "Sat", count: 1, flag: null },
-  { day: "Sun", count: 1, flag: null },
-];
+const IS_MONDAY = false;
+const weekShape = [];
 
 // Systems health data
 const SYSTEMS_STATUS = "amber";
-const SYSTEMS_SUMMARY = "3 errors yesterday — meta critical (agent-engineering.md destroyed/recovered from vault), mcp schema miss. Meta now 6+ in 7 days; SAFE-APPEND patches applied to 5 procs but unverified.";
-const ERROR_COUNT_24H = 3;
-const ERROR_COUNT_7D = 18;
+const SYSTEMS_SUMMARY = "Clean yesterday (0 errors). Meta category remains systemic: 4 instances in 7-day window. Write-safety pattern recurring. Echo-confirm handoff fix still unactioned.";
+const ERROR_COUNT_24H = 0;
+const ERROR_COUNT_7D = 10;
 const PRIORITY_ACTION = {
-  title: "Numbered-list pickup echo-confirm",
-  fix: "Patch handoff skill: when user replies with a bare number to a numbered thread list, echo back 'Got it — #N, [title]' before loading handoff file. See E-busy-gracious-fermi-001.",
-  impact: "Prevents wrong-thread loads; ~3-5 tool calls saved per occurrence",
+  title: "Handoff skill: add echo-confirm before thread load",
+  fix: "When user replies with a bare number to a numbered thread list, echo: 'Got it — #N, [title]. Proceeding.' before loading the handoff file.",
+  impact: "~3-5 tool calls saved per wrong-pickup avoided",
 };
-// errorTrends schema: { label, count7d, direction, detail?, fix? }
 const errorTrends = [
   {
     label: "meta",
-    count7d: 6,
-    direction: "up",
-    detail: "Rules/skill/process errors — including agent-engineering.md corruption by scheduled task, cowork-tips-log overwrite, wrong thread from numbered list. Systemic: 6 in 7 days.",
-    fix: "Audit all scheduled task procs for write-safety compliance. Apply SAFE-APPEND to any file written by automation.",
+    count7d: 4,
+    direction: "down",
+    detail: "Write-safety violations, wrong pickups, and log corruption events. Root causes: missing read-before-write, bare-number replies triggering wrong thread loads, cowork-tips-log overwrite without backup.",
+    fix: "SAFE-APPEND protocol for all log appends; handoff skill echo-confirm before any thread load.",
   },
   {
     label: "mcp-behavior",
-    count7d: 4,
-    direction: "up",
-    detail: "MCP tool misuse — type errors (string vs number), missing required params, wrong tool for task. Pattern: schema not verified before first use.",
-    fix: "Before first use of any MCP tool in a session: run ToolSearch to load schema, verify required param types.",
+    count7d: 2,
+    direction: "down",
+    detail: "MCP tool schema mismatches and unsupported parameter usage (offset: on read_text_file, batch size limits).",
+    fix: "Verify tool schema before use via ToolSearch; prefer tail: over offset: for large file reads.",
   },
   {
-    label: "deploy/build",
-    count7d: 3,
+    label: "network-browser",
+    count7d: 2,
     direction: "flat",
-    detail: "JSX build failures and deploy pipeline errors. All caught before publish but each adds ~10-15 min.",
-    fix: "Validate JSX syntax before writing deploy-queue.jsx. Check for unescaped characters in data strings.",
+    detail: "WebFetch domain access restrictions hitting blocked content silently.",
+    fix: "Use WebSearch as primary for fresh data; WebFetch only for specific known-accessible URLs.",
   },
 ];
 
 // Tips data
-// Tip schema: { id, score, headline, detail, category, action, sessionPrompt }
 const TIPS_LABEL = "10 tips scored";
 const tips = [
   {
-    id: 1, score: 94, category: "Calendar",
-    headline: "Zoom ready at 11:55a — Kate's call depends on it",
-    detail: "Kate's noon call requires Dave to be logged in and ready. She's calling from Ukraine — any technical delay on Dave's side means a failed connection. Open Zoom no later than 11:55a. Check audio and video before the call.",
-    action: "Set phone reminder for 11:50a → open Zoom → confirm audio/video",
-    sessionPrompt: "I have a Zoom call at noon. Help me prep quickly — what do I need to check?",
+    id: 1, score: 88, category: "Calendar",
+    headline: "Generator Repair at 10a overlaps work busy block — confirm availability by 9:30a",
+    detail: "Your work calendar shows a busy block from 10-10:30a on the same day as the Generator Repair appointment. If the tech arrives and you're in a work commitment, the overlap becomes a day-disrupting collision. 90 seconds to check now prevents that.",
+    action: "Before 9:30a: verify you're free from 10a. If not, contact the repair service to adjust the arrival window.",
+    sessionPrompt: null,
   },
   {
-    id: 2, score: 90, category: "Sessions",
-    headline: "Echo-confirm thread number before loading any handoff",
-    detail: "When a session lists numbered threads and you reply with a bare number (e.g., '3'), the skill sometimes loads the wrong thread. The fix is a one-line skill patch: echo back 'Got it — #3, [title]' before loading. Until patched, always use the thread title or the 'pickup [slug]' form.",
-    action: "Use 'pickup [thread-title]' rather than bare numbers until the handoff skill is patched",
-    sessionPrompt: "I want to patch my handoff skill: when I reply with a bare number to a numbered thread list, echo back which thread you're loading before loading it.",
+    id: 2, score: 88, category: "Specialized Agents",
+    headline: "Pre-brief agents: goal + done-definition + one constraint before dispatching",
+    detail: "Agents dispatched with a 2-3 sentence pre-brief — what I want, what 'done' looks like, one constraint to stay in bounds — complete tasks in fewer round-trips than those started from vague intent. Preparation theme pays back on every dispatch.",
+    action: "Before your next Agent dispatch: write one sentence each for goal, done-signal, and constraint.",
+    sessionPrompt: "I want to review my recent agent dispatches and identify which ones had poor pre-briefs. Help me write a reusable pre-brief template for common agent patterns in my setup.",
   },
   {
-    id: 3, score: 88, category: "Architecture",
-    headline: "Dispatch parallel agents for research + write workflows",
-    detail: "The highest-leverage dispatch pattern: one agent gathers facts, another drafts structure. Coordinator assembles. Saves 40–60% wall-clock time on consulting research briefs, bible captures, and vault write sweeps. Works best when the two tasks don't share state.",
-    action: "For tasks with both 'look up X' and 'write Y': dispatch both agents in the same message",
-    sessionPrompt: "I want to design a parallel agent dispatch template for research + writing tasks. Help me write a reusable dispatch prompt I can reference in sessions.",
+    id: 3, score: 87, category: "Dave-actionable-workflow",
+    headline: "Echo-confirm fix: 30 seconds to close the highest-leverage open item",
+    detail: "When you reply with a bare number to a thread list, the handoff skill sometimes loads the wrong thread. The fix is one line: echo 'Got it — #N, [title]. Proceeding.' before loading. This has been PRIORITY_ACTION for 2 consecutive days. Zero errors yesterday = clear runway to close it now.",
+    action: "pickup echo-confirm handoff fix → add the echo line → mark integrated",
+    sessionPrompt: "pickup echo-confirm handoff fix",
   },
   {
-    id: 4, score: 85, category: "Infrastructure",
-    headline: "Vault write at session close — before the handoff sweep, not after",
-    detail: "Vault-worthy facts written at session close (before handoff) get captured even if the project goes dormant. The portability test: 'Would Dave lose context if this fact were deleted?' If yes, write it now. Aggressive posture means erring toward too much rather than too little.",
-    action: "Before writing any handoff: ask 'did this session surface anything vault-worthy?'",
-    sessionPrompt: "I want a 3-question vault sweep checklist to run before every session handoff. Design it.",
+    id: 4, score: 82, category: "Dave-actionable-workflow",
+    headline: "One workflow per Claude Project — mixing workflows creates context bleed",
+    detail: "Separate Claude Projects should serve separate workflows, not just topics. Consulting sprint work bleeding into Claude ops threads muddies session intent and canon. Workflow-separation means each Project carries only one domain's context. Projects tip: workflow-separation theme.",
+    action: "Review your active Claude Projects: do any contain threads from 2+ distinct workflows? If so, create a dedicated Project for the minority.",
+    sessionPrompt: "Help me audit my active Claude Projects and threads. Identify any Projects that contain threads from multiple distinct workflows and suggest how to separate them.",
   },
   {
-    id: 5, score: 82, category: "Sessions",
-    headline: "Batch all reads in one message — save 2–3 round trips",
-    detail: "Bootstrap reads (CLAUDE.md, rubric, lessons, handoff-index) all fire simultaneously. The same pattern applies anywhere: list all files needed, then fire them all in one message. Each sequential read adds ~15–30s of latency. Batch ceiling is ~50KB — large files get their own parallel call in the same message.",
-    action: "Before any multi-file read: list all files needed → fire them all at once",
-    sessionPrompt: "Review my bootstrap read pattern. Are any reads still sequential that could be parallelized?",
+    id: 5, score: 80, category: "Dave-actionable-workflow",
+    headline: "Route Obsidian captures at write time — 5 seconds now, 30 minutes saved later",
+    detail: "When capturing a session note, pick the destination before writing: memory/ for person/project facts, ops/ for operational rules, ideas/ for raw captures. Knowledge-routing at capture time costs seconds; re-routing months later during a vault search costs significantly more. Obsidian tip: knowledge-routing theme.",
+    action: "Before your next vault write: ask — is this a fact (memory/), a rule (ops/), or an idea (ideas/)? Route first, then write.",
+    sessionPrompt: "Review my recent Obsidian vault writes and help me assess whether they were routed to the correct directories. Flag any that should be in a different location.",
   },
   {
-    id: 6, score: 78, category: "Infrastructure",
-    headline: "Obsidian vault links break silently on file rename — audit after any move",
-    detail: "Obsidian wiki-links ([[file-name]]) don't update when files are renamed. After any vault restructure, links pointing to the old name become orphaned silently. The filesystem MCP can grep for [[old-name]] patterns to catch them before they compound.",
-    action: "After any vault file rename: grep [[old-name]] across vault to find orphaned links",
-    sessionPrompt: "Audit my Obsidian vault for broken wiki-links. List any orphaned [[links]] and the files that contain them.",
+    id: 6, score: 78, category: "Dave-actionable-workflow",
+    headline: "Document the launchd queue-drop pattern now — reuse value is high",
+    detail: "The morning dashboard deploy pattern (proc.md writes deploy-queue.jsx → launchd daemon runs GitHub PUT → Netlify verify) is a proven Mac automation template. Documenting it in a reference file now makes it reusable for future automations without reinventing the daemon config. Automation tip: pattern-capture theme.",
+    action: "Add /Users/davenichols/Obsidian/Claude/reference/launchd-queue-drop-pattern.md capturing the architecture, daemon plist, and queue-drop naming convention.",
+    sessionPrompt: "Help me document my launchd queue-drop automation pattern. I want a reference file that captures the architecture, the daemon plist structure, the queue-drop file naming convention, and an example workflow.",
   },
   {
-    id: 7, score: 74, category: "Infrastructure",
-    headline: "Search for reusable patterns before writing any new proc.md",
-    detail: "The SAFE-APPEND protocol, error-log schema, CQR append flow, and parallel bootstrap reads are already genericized across proc.md files. Before scaffolding a new scheduled task, search /scheduled-tasks/ for these patterns. Reuse saves ~1h per task and prevents protocol divergence.",
-    action: "grep 'SAFE-APPEND|error-log|cqr-log' across scheduled-tasks/ before writing new proc.md",
-    sessionPrompt: "I want to build a new scheduled task. Before I start, show me which patterns in my existing proc.md files are reusable.",
+    id: 7, score: 77, category: "Dave-actionable-workflow",
+    headline: "Jen-config scoping: one audit pass to confirm session-skill scope isolation",
+    detail: "Jen-partner.md and simplified instruction patterns are in place, but session-skill triggers haven't been verified for scope isolation. One pass through the family-calendar skill to confirm complexity-tier rules intended only for Dave don't bleed into Jen's sessions closes this gap cleanly. Session skill tip: awareness theme.",
+    action: "Read family-calendar SKILL.md and verify no Dave-only complexity rules are exposed in Jen's calendar sessions.",
+    sessionPrompt: "Audit my family-calendar skill for any rules or patterns scoped to Dave-only complexity tiers. Confirm Jen's sessions get simplified, jargon-free responses.",
   },
   {
-    id: 8, score: 70, category: "Calendar",
-    headline: "Thursday has 0 events — protect it for deep work this week",
-    detail: "This week's shape shows Thursday completely clear. ADHD-optimized scheduling means identifying and protecting zero-event days before other obligations fill them. One 2–3h deep work block on Thursday outperforms three fragmented hour sessions across the week.",
-    action: "Block 'Deep Work' on Thursday before the week fills",
-    sessionPrompt: "cal add Deep Work Thursday 9am-12pm",
+    id: 8, score: 72, category: "Dave-actionable-workflow",
+    headline: "Name your top 3 threads before opening new work — prevents priority diffusion",
+    detail: "With 10 active/loaded threads, everything feels equally present. Naming 3 explicitly — what moves today — prevents the 'everything is priority' trap that scatters attention across sessions. Takes 2 minutes; returns focus for the full day.",
+    action: "Before opening any thread today: name your top 3 in priority order. Check them off before exploring anything else.",
+    sessionPrompt: "Review my handoff-index.md and help me select the top 3 threads to advance today based on urgency, recency, and impact on my primary goal.",
   },
   {
-    id: 9, score: 65, category: "Errors",
-    headline: "Error log entries written at pivot capture 3x more actionable detail",
-    detail: "Entries written at the moment of pivot (when the error is fresh) include the exact context, the failed assumption, and the correction. Entries written at session end are summaries. The error-log's value as a pattern-detection tool is directly proportional to entry granularity.",
-    action: "Next time a tool call fails: open error-log.md immediately, before retrying",
-    sessionPrompt: "Review my recent error-log entries. Which ones were written at pivot vs. session end? What detail is missing?",
+    id: 9, score: 71, category: "Dave-actionable-data",
+    headline: "Zero errors yesterday = best time to act on PRIORITY_ACTION, not just note it",
+    detail: "Clean error days are high-signal: the system is stable and the runway is clear. That stability window is the right time to close PRIORITY_ACTION items rather than just noting them again. Two consecutive mornings with echo-confirm as priority and no action means the clean window is being spent elsewhere.",
+    action: "One clean day = one closed action item. Pick the shortest PRIORITY_ACTION and close it before new work begins.",
+    sessionPrompt: null,
   },
   {
-    id: 10, score: 62, category: "Consulting",
-    headline: "AI talent gap is your opening: 96% plan AI tools, only 42% have staff to execute",
-    detail: "EY data shows energy companies committing to AI without the workforce to execute. That gap is your product. Outreach framing: 'I help energy teams execute AI initiatives they already have budget for but lack expertise to deploy.' No selling — just closing the gap they've already identified.",
-    action: "Draft one outreach message using the talent gap as the problem statement",
-    sessionPrompt: "Help me draft a 3-sentence LinkedIn outreach to an energy executive. Problem: AI talent gap. Solution: I close the gap between their AI budget and execution.",
+    id: 10, score: 68, category: "Dave-actionable-strategy",
+    headline: "A free 2-hour AI discovery session is your lowest-friction pipeline entry",
+    detail: "The fastest way to start the consulting pipeline is a no-stakes conversation. A free 2-hour discovery session with a small business owner or energy sector professional costs them nothing, demonstrates your workflow design practice, and creates a natural transition to a paid engagement. No deck, no proposal — just a conversation.",
+    action: "Identify one contact who might value an AI workflow review. Draft a 2-sentence offer: free discovery, no commitment, 2 hours.",
+    sessionPrompt: "Help me draft a 2-sentence outreach message offering a free AI workflow discovery session. Target: small business owner or energy sector professional. Tone: peer-to-peer, not salesy.",
   },
 ];
 
 // Skills progress — dynamic fields only. Static metadata lives in SKILLS_META in the component section.
 // Schema: { name, level (New/Early/Maturing/Stable), trend (↑/→/↓) }
-// Authoritative list: always exactly these 6 Cowork skill files, always in this order.
 const SKILLS_PROGRESS = [
   { name: "Calendar",      level: "Maturing", trend: "→" },
   { name: "Handoff",       level: "Maturing", trend: "→" },
   { name: "Bible",         level: "Stable",   trend: "→" },
-  { name: "Cartography",   level: "Maturing", trend: "→" },
+  { name: "Cartography",   level: "Stable",   trend: "→" },
   { name: "Skill Manager", level: "Maturing", trend: "→" },
   { name: "Session",       level: "New",      trend: "→" },
 ];
 
 // ─── Thread Pulse ────────────────────────────────────────────────────────────
-// All active + loaded threads from handoff-index.md. Always renders — even 1 thread is signal.
-// Schema: { title, project, status ("active"|"loaded"), ageLabel, summary, pickupCmd, stale }
 // stale: true when thread is > 7 days old
 const threads = [
-  { title: "treasury-ladder-april-execution", project: "Finance", status: "active", ageLabel: "6d", summary: "Treasury ladder setup for April — CD ladder structure, execution steps ready. Apr 11 deadline.", pickupCmd: "pickup treasury-ladder-april-execution", stale: false },
-  { title: "jen-setup-day-ready-to-execute", project: "jen-config", status: "active", ageLabel: "5d", summary: "Jen's Cowork setup day — all sessions built, waiting on her Windows machine", pickupCmd: "pickup jen-setup-day-ready-to-execute", stale: false },
-  { title: "maquis-inc-research", project: "Claude", status: "active", ageLabel: "4d", summary: "Maquis Inc consulting research — competitive landscape, AI practice positioning", pickupCmd: "pickup maquis-inc-research", stale: false },
-  { title: "cowork-global-instructions-restore", project: "Claude", status: "active", ageLabel: "4d", summary: "Restore Cowork global instructions after settings drift — PASTE files ready", pickupCmd: "pickup cowork-global-instructions-restore", stale: false },
-  { title: "jen-config-project-scoping", project: "jen-config", status: "active", ageLabel: "3d", summary: "Scoping Jen's ongoing config projects — priority order and next steps set", pickupCmd: "pickup jen-config-project-scoping", stale: false },
-  { title: "dashboard-tips-overhaul", project: "Claude", status: "active", ageLabel: "1d", summary: "Tips section redesign — scoring system, dedup window, category ceilings, rotation logic", pickupCmd: "pickup dashboard-tips-overhaul", stale: false },
-  { title: "session-archive-drive-fix", project: "Claude", status: "loaded", ageLabel: "4d", summary: "Drive backup for session archives — 315 sessions without backup (E-pensive-nifty-knuth-001)", pickupCmd: "pickup session-archive-drive-fix", stale: false },
-  { title: "vault-sweep-deployed", project: "Claude", status: "loaded", ageLabel: "today", summary: "Vault sweep scheduled task deployed and verified live", pickupCmd: "pickup vault-sweep-deployed", stale: false },
-  { title: "aggressive-vault-buildout", project: "Claude", status: "loaded", ageLabel: "today", summary: "Aggressive vault posture established — write triggers, portability test, and bootstrap triggers active", pickupCmd: "pickup aggressive-vault-buildout", stale: false },
+  { title: "bootstrap phase 1 elimination", project: "Claude", status: "active", ageLabel: "1d", summary: "PREFS_KERNEL_V3 deployed — open item: investigate eliminating ToolSearch round-trip by making filesystem MCP always-available", pickupCmd: "pickup bootstrap phase 1 elimination", stale: false },
+  { title: "delete stale scheduled task", project: "Claude", status: "active", ageLabel: "1d", summary: "skill-token-optimization-run confirmed disabled; needs manual removal via Cowork UI — no API delete exists", pickupCmd: "pickup delete stale scheduled task", stale: false },
+  { title: "bootstrap pastes delivered", project: "Claude", status: "active", ageLabel: "1d", summary: "Both PASTE files delivered — Global Instructions + User Preferences. Dave must paste both into Cowork Settings to close cool-sleepy-maxwell.", pickupCmd: "pickup bootstrap pastes delivered", stale: false },
+  { title: "dashboard tips overhaul", project: "Claude", status: "active", ageLabel: "2d", summary: "No-op session confirmed — all pending items from quirky-magical-meitner carry forward", pickupCmd: "pickup dashboard tips overhaul", stale: false },
+  { title: "jen config project scoping", project: "jen-config", status: "active", ageLabel: "4d", summary: "Scoped jen-config as standalone Project — crucible validated, 3 index hygiene items executed, no structural changes needed", pickupCmd: "pickup jen config project scoping", stale: false },
+  { title: "maquis inc research", project: "Claude", status: "active", ageLabel: "5d", summary: "Deep research on Maquis Inc. (NY, Sept 2025) and all businesses using 'Maquis' globally with tech/AI emphasis", pickupCmd: "pickup maquis inc research", stale: false },
+  { title: "jen setup day — ready to execute", project: "jen-config", status: "active", ageLabel: "6d", summary: "All blockers cleared — manifest v2.5.3, V4.2.0 canonical. Needs Jen's Windows machine to execute.", pickupCmd: "pickup jen setup day — ready to execute", stale: false },
+  { title: "treasury ladder april execution", project: "Finance", status: "active", ageLabel: "7d", summary: "CD maturities April 11+14 ($241.4k total) — independent analysis run, allocation planned. April 11 is 4 days out.", pickupCmd: "pickup treasury ladder april execution", stale: false },
+  { title: "vault sweep deployed", project: "Claude", status: "loaded", ageLabel: "2d", summary: "Vault sweep added to handoff skill v2.0.1 Write Flow; AE-015 written to agent-engineering.md", pickupCmd: "pickup vault sweep deployed", stale: false },
+  { title: "session archive drive fix", project: "Claude", status: "loaded", ageLabel: "5d", summary: "First session-archive run completed locally (19/264 sessions); Drive upload blocked — relay expects docId, not Drive folder ops", pickupCmd: "pickup session archive drive fix", stale: false },
 ];
-const THREAD_COUNT = 9;
+const THREAD_COUNT = 10;
 const THREAD_STALE_COUNT = 0;
 
 // ─── Morning Intent ──────────────────────────────────────────────────────────
-// 3 actionable priorities synthesized from threads + calendar + systems at task run time.
-// Schema: { rank, text, source ("threads"|"calendar"|"systems"|"goal"), pickupCmd }
 const morningIntent = [
-  { rank: 1, text: "Kate's Zoom at noon — be logged in and ready by 11:55a. She's calling from Ukraine; any delay on your side drops the call.", source: "calendar", pickupCmd: "Remind me about Kate's noon Zoom call and help me prep." },
-  { rank: 2, text: "Treasury ladder: Apr 11 deadline is 5 days out. Confirm the CD purchase plan and the specific next action to execute.", source: "goal", pickupCmd: "pickup treasury-ladder-april-execution" },
-  { rank: 3, text: "Patch the handoff skill echo-confirm bug — one-line fix, directly addresses E-busy-gracious-fermi-001. High leverage on a Monday.", source: "systems", pickupCmd: "I want to patch my handoff skill: when I reply with a bare number to a numbered thread list, echo back which thread you're loading before loading it." },
+  { rank: 1, text: "Generator Repair at 10a overlaps work busy block — confirm availability before the tech arrives (by 9:30a)", source: "calendar", pickupCmd: "Check my Google Calendar — I have a Generator Repair at 10a that may conflict with a work block. Help me resolve it." },
+  { rank: 2, text: "Close the echo-confirm handoff fix: 30 seconds, saves 3-5 tool calls per wrong-pickup — two days as PRIORITY_ACTION with no action", source: "systems", pickupCmd: "pickup echo-confirm handoff fix" },
+  { rank: 3, text: "Treasury ladder: April 11 maturity is 4 days out and $241.4k still unallocated — decision window is closing", source: "threads", pickupCmd: "pickup treasury ladder april execution" },
 ];
 
 // ─── Consulting Signals ───────────────────────────────────────────────────────
-// 2–3 items from targeted web search at task run time. Empty array = "quiet week."
-// Schema: { headline, why, source }
 const consultSignals = [
-  { headline: "Energy AI talent gap: 96% plan AI tools, only 42% have staff to execute", why: "Direct positioning signal — this is the gap your practice closes. Use as the opening line in energy-sector outreach.", source: "EY Energy Transition Survey 2026" },
-  { headline: "Renewable energy AI investment: $26.3B CAGR through 2028", why: "Budget is there. Energy executives have capital allocated but lack execution partners — your consulting entry point.", source: "BloombergNEF 2026 Energy AI Report" },
-  { headline: "Agentic AI reduces enterprise support handling time by 60%", why: "Concrete ROI benchmark for client conversations — gives you a quantified outcome to anchor scope discussions.", source: "Salesforce State of AI Report 2026" },
+  { headline: "Deloitte: 70% of utility sector leaders feel unprepared for external business risks including AI deployment", why: "Direct validation of the preparedness gap your practice fills — utility executives want AI but lack the workflow and operations readiness to deploy it. Your AI Readiness Audit maps exactly to this.", source: "Deloitte 2026 Power and Utilities Outlook" },
+  { headline: "Agentic AI moving from pilot to production at scale in energy — but 40% risk of missing value without proper integration", why: "The 40% miss-rate on AI value when legacy platforms remain is your entry framing: the gap isn't ambition, it's operational readiness. That's what you audit.", source: "Deloitte 2026 Energy Resources and Industrials Outlook" },
+  { headline: "Google Cloud: 7 major power and energy companies deploying AI at scale in 2026 — workforce enablement is the top unmet need", why: "Named deployments signal the market is real and moving. Workforce enablement as top unmet need = consulting demand for your workflow and tooling expertise.", source: "Google Cloud Transform Blog, 2026" },
 ];
-const CONSULT_SIGNAL_DATE = "2026-04-06";
+const CONSULT_SIGNAL_DATE = "2026-04-07";
 
-// ─── Goal Anchor ───────────────────────────────────────────────────────────────
-// Populated from /morning-dashboard/goals.json at task run time. Motivational context.
-// Schema: { label, target, milestone, elapsedPct (0-100), horizonLabel }
+// ─── Goal Anchor ──────────────────────────────────────────────────────────────
 const goalAnchor = {
   label: "AI Consulting Practice",
   target: "First paying engagement",
-  milestone: "Day 11 of 184-day sprint",
-  elapsedPct: 6,
+  milestone: "90-day sprint: tooling → outreach → first client",
+  elapsedPct: 7,
   horizonLabel: "Sep 2026",
 };
 
-// ─── Monday Scorecard ──────────────────────────────────────────────────────────
-// null on non-Mondays. Populated from cqr-log.md on Mondays only.
-// Schema: { domain, lastWeekAvg (0-100), trend ("↑"|"→"|"↓") }
-const mondayScorecard = [
-  { domain: "build",      lastWeekAvg: 91, trend: "→" },
-  { domain: "meta",       lastWeekAvg: 90, trend: "→" },
-  { domain: "research",   lastWeekAvg: 90, trend: "→" },
-  { domain: "autonomous", lastWeekAvg: 85, trend: "↓" },
-  { domain: "tips",       lastWeekAvg: 66, trend: "→" },
-];
+// ─── Monday Scorecard ─────────────────────────────────────────────────────────
+const mondayScorecard = null;
 
 // ─── Dashboard Meta ───────────────────────────────────────────────────────────
-// Read from /morning-dashboard/dashboard-meta.json at task run time.
-// changelog entry: { date (YYYY-MM-DD), type ("added"|"changed"|"removed"|"fixed"), item, note }
-// nextIdeas entry: { idea, desc, sessionPrompt }
 const dashboardMeta = {
   version: "V008-20260405",
   changelog: [
-    { date: "2026-04-05", type: "added",   item: "CQR 2.0 schema",              note: "Added conf-range and FF (failure footprint) columns to cqr-log.md. Schema versioned and backward-compatible." },
-    { date: "2026-04-05", type: "added",   item: "Obsidian vault integration",   note: "Aggressive vault posture: write triggers, portability test, and bootstrap topic triggers active across all sessions." },
-    { date: "2026-04-01", type: "added",   item: "Dashboard Meta block",         note: "Self-documenting: block inventory, changelog, and next-evolution ideas with copy prompts." },
-    { date: "2026-03-28", type: "added",   item: "Morning Intent block",         note: "Top 3 synthesized priorities from threads, calendar, goals, systems. Replaced passive summary." },
-    { date: "2026-03-28", type: "added",   item: "Goal Anchor block",            note: "90-day sprint progress bar driven by goals.json. Gives the daily grind a horizon line." },
-    { date: "2026-03-28", type: "added",   item: "Consulting Signal block",      note: "3 curated industry signals, each connected to practice positioning." },
-    { date: "2026-03-27", type: "changed", item: "Calendar → sidebar",           note: "Shifted from main column to sidebar so tips and threads get more vertical space." },
-    { date: "2026-03-26", type: "added",   item: "Thread Pulse block",           note: "Full thread list with age, project, stale flag, and copyable pickup commands." },
+    { date: "2026-04-05", type: "changed", item: "Tip rule config-driven",      note: "consulting_tip_max_per_run, consulting_tip_score_cap, dave_human_efficiency_min_per_run added to config.json and wired as CONFIG reads in proc.md. Ceiling override language hardened in both rules." },
+    { date: "2026-04-05", type: "changed", item: "Tip rating persistence",      note: "Send now marks tips with indigo ✓ badge showing your score. Persists via localStorage keyed to TIP_DATE — survives page reload, auto-clears on next dashboard run." },
+    { date: "2026-04-05", type: "changed", item: "Tip generation rules",        note: "Consulting practice tips deprioritized (max 1/run, score ≤75). Dave-human-efficiency tips added as mandatory (min 2/run, ceiling 92) — process gaps, session overhead, skill upgrades, opportunity space." },
+    { date: "2026-04-01", type: "added",   item: "Dashboard Meta block",        note: "Self-documenting: block inventory, changelog, and next-evolution ideas with copy prompts. Freedom-to-evolve authorized." },
+    { date: "2026-03-28", type: "added",   item: "Morning Intent block",        note: "Synthesizes top 3 actionable priorities from all data sources. Replaced passive summary with action-oriented lead." },
+    { date: "2026-03-28", type: "added",   item: "Goal Anchor block",           note: "90-day sprint progress bar driven by goals.json. Gives the daily grind a horizon line." },
+    { date: "2026-03-28", type: "added",   item: "Consulting Signal block",     note: "3 curated industry signals from targeted web searches, each connected to practice positioning." },
+    { date: "2026-03-27", type: "changed", item: "Calendar → sidebar",         note: "Shifted from main column to right sidebar so tips and threads get more vertical space." },
+    { date: "2026-03-26", type: "added",   item: "Thread Pulse block",         note: "Full thread list with age, project, stale flag, and copyable pickup commands." },
+    { date: "2026-03-25", type: "changed", item: "Tip ID copy added",          note: "Each tip gets a copyable ID for the tip-rating feedback loop." },
+    { date: "2026-03-24", type: "added",   item: "Monday Scorecard block",     note: "Weekly CQR analysis by domain, conditionally rendered on Mondays." },
   ],
   nextIdeas: [
     {
       idea: "3-day momentum block",
       desc: "Yesterday's key action, today's primary move, what tomorrow unlocks. Makes sprint progress feel real even on slow days.",
-      sessionPrompt: "I want to add a '3-day momentum' block to my morning dashboard. It should show: yesterday's key action, today's primary move, and what tomorrow unlocks. Draft the data schema and a React component matching the dashboard's visual style.",
+      sessionPrompt: "I want to add a '3-day momentum' block to my morning dashboard. It should show: yesterday's key action, today's primary move, and what tomorrow unlocks. Draft the data schema and a React component that matches the dashboard's visual style.",
     },
     {
       idea: "Open decisions block",
@@ -247,17 +221,17 @@ const dashboardMeta = {
     {
       idea: "Weekly rhythm view",
       desc: "Which day is deep work, outreach, Nika, rest. Puts each daily card in context of the week's intended shape.",
-      sessionPrompt: "I want to add a weekly rhythm block to my morning dashboard showing my intended day-type for each day (deep work / outreach / family / rest). Draft the data structure and a React component matching the dashboard's visual style.",
+      sessionPrompt: "I want to add a weekly rhythm block to my morning dashboard showing my intended day-type for each day of the week (deep work / outreach / family / rest). Draft the data structure and a React component that matches the dashboard's visual style.",
     },
     {
       idea: "Signal talking-point layer",
-      desc: "Each signal has a 'why it matters' note. Next: a one-sentence talking point ready to paste in outreach or a discovery call.",
-      sessionPrompt: "Enhance the Consulting Signal section of my morning dashboard: each signal should include a ready-to-paste talking point I can use verbatim in outreach or a call. Update the ConsultingSignalSection component and the dashboardMeta changelog.",
+      desc: "Each signal already has a 'why it matters' note. Add a one-sentence talking point ready to paste in outreach or a discovery call.",
+      sessionPrompt: "Enhance the Consulting Signal section of my morning dashboard: each signal should include a ready-to-paste talking point I can use verbatim in outreach or a call. Update the ConsultingSignalSection component and dashboardMeta changelog to reflect this change.",
     },
   ],
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════
 // COMPONENT — Do not modify below this line.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -332,7 +306,6 @@ const LEVEL_STYLE = {
   Stable:   { color: "#065f46", bg: "#d1fae5" },
 };
 
-// Source badge styles for Morning Intent
 const INTENT_SOURCE_STYLE = {
   threads:  { color: "#6366f1", bg: "#eef2ff" },
   calendar: { color: "#0284c7", bg: "#e0f2fe" },
@@ -690,9 +663,14 @@ function TipsSection() {
   const [expanded, setExpanded] = useState({});
   const [ratingOpen, setRatingOpen] = useState({});
   const [copiedId, setCopiedId] = useState(null);
-  const [ratedTips, setRatedTips] = useState({});
+  const RATED_KEY = `rated_tips_${TIP_DATE}`;
+  const [ratedTips, setRatedTips] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(RATED_KEY) || "{}"); } catch { return {}; }
+  });
   const handleRated = (tipId, score, comment) => {
-    setRatedTips(prev => ({ ...prev, [tipId]: { score, comment, ts: Date.now() } }));
+    const updated = { ...ratedTips, [tipId]: { score, comment, ts: Date.now() } };
+    setRatedTips(updated);
+    try { localStorage.setItem(RATED_KEY, JSON.stringify(updated)); } catch {}
   };
   const toggleExpand = (id) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
   const toggleRating = (id, e) => { e.stopPropagation(); setRatingOpen(prev => ({ ...prev, [id]: !prev[id] })); };
@@ -807,7 +785,6 @@ function SkillsCard() {
   );
 }
 
-// ─── Thread Pulse ─────────────────────────────────────────────────────────────
 function ThreadPulseSection() {
   const [copiedIdx, setCopiedIdx] = useState(null);
   const copy = (cmd, i, e) => {
@@ -851,7 +828,6 @@ function ThreadPulseSection() {
   );
 }
 
-// ─── Morning Intent ───────────────────────────────────────────────────────────
 function MorningIntentSection() {
   const [copiedIdx, setCopiedIdx] = useState(null);
   const copy = (cmd, i, e) => {
@@ -891,7 +867,6 @@ function MorningIntentSection() {
   );
 }
 
-// ─── Goal Anchor ──────────────────────────────────────────────────────────────
 function GoalAnchorCard() {
   const pct = Math.min(100, Math.max(0, goalAnchor.elapsedPct));
   return (
@@ -912,7 +887,6 @@ function GoalAnchorCard() {
   );
 }
 
-// ─── Consulting Signals ───────────────────────────────────────────────────────
 function ConsultingSignalSection() {
   return (
     <div style={sectionCard}>
@@ -935,7 +909,6 @@ function ConsultingSignalSection() {
   );
 }
 
-// ─── Dashboard Meta ───────────────────────────────────────────────────────────
 function DashboardMetaSection() {
   const [view, setView] = useState("log");
   const [copiedIdx, setCopiedIdx] = useState(null);
@@ -1028,8 +1001,6 @@ function DashboardMetaSection() {
   );
 }
 
-// ─── Monday Scorecard ─────────────────────────────────────────────────────────
-// Only renders when IS_MONDAY and mondayScorecard is populated.
 function MondayScorecardSection() {
   if (!mondayScorecard || !mondayScorecard.length) return null;
   const sorted = [...mondayScorecard].sort((a, b) => b.lastWeekAvg - a.lastWeekAvg);
