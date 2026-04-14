@@ -12,55 +12,56 @@ import { useState } from "react";
 // LIVE DATA — Claude replaces ONLY this section. Component code is frozen.
 // ═══════════════════════════════════════════════════════════════════════════
 
-const BRIEFING_DATE = "Monday, Apr 13";
+const BRIEFING_DATE = "Tuesday, Apr 14";
 const BRIEFING_TIME = "7:30a";
-const TIP_DATE = "0413.0730"; // MMDD.HHMM — scopes tip IDs to a specific run: 0413.0730-01
+const TIP_DATE = "0414.0730"; // MMDD.HHMM — scopes tip IDs to a specific run: 0414.0730-01
 const GREETING = "Good morning, Dave.";
 
 // Calendar data
-const CAL_SUMMARY = "⚠ GCal MCP returning only contact birthday history — no real events (run 5+)";
-const calEvents = [];
-const IS_MONDAY = true;
-const weekShape = [
-  { day: "Mon", count: 0, flag: "" },
-  { day: "Tue", count: 0, flag: "busy" },
-  { day: "Wed", count: 0, flag: "" },
-  { day: "Thu", count: 0, flag: "" },
-  { day: "Fri", count: 0, flag: "" },
+const CAL_SUMMARY = "3 events · 1 conflict";
+const calEvents = [
+  { id: 1, time: "9:00a", end: "10:00a", dur: "1h", title: "Check ALLY — T-Bill Funds", color: "#42d692",
+    prep: "T-bill auction window ~Apr 15. Transfer $110k Ally→Schwab if not done. pensive-jolly-dijkstra locked.", allDay: false },
+  { id: 2, time: "9:30a", end: "5:00p", dur: "7.5h", title: "Work — Busy (private)", color: "#cd74e6",
+    prep: null, allDay: false },
+  { id: 3, time: "12:00p", end: "2:00p", dur: "2h", title: "Lena — Jen's session", color: "#42d692",
+    conflict: "Overlaps Work Busy 12:00p–3:00p", prep: "Jen's recurring tutoring. Keep noise down noon–2p.", allDay: false },
 ];
+const IS_MONDAY = false;
+const weekShape = [];
 
 // Systems health data
 const SYSTEMS_STATUS = "amber";
-const SYSTEMS_SUMMARY = "0 errors in 24h, 1 advisory in 7d (Apr 5 batch aged out — improving from 4). Echo-confirm 8d PRIORITY_ACTION. Session-archive 4d stale (escalating). CRITICAL: Treasury CD matures tomorrow Apr 14.";
-const ERROR_COUNT_24H = 0;
-const ERROR_COUNT_7D = 1;
+const SYSTEMS_SUMMARY = "3 errors yesterday (mcp-behavior×2 + tool-scope×1) after 6 clean days — recovery streak broken. Edit_file schema confusion now 3× = systemic. Echo-confirm PA entering day 9.";
+const ERROR_COUNT_24H = 3;
+const ERROR_COUNT_7D = 4;
 const PRIORITY_ACTION = {
-  title: "numbered-list echo-confirm (8 days)",
-  fix: "One line in handoff SKILL.md: when user replies with a bare number to a numbered list, echo 'Got it — #N, [title].' before loading. See E-busy-gracious-fermi-001.",
+  title: "numbered-list echo-confirm (9 days)",
+  fix: "One line in handoff SKILL.md: when user replies with bare number to numbered list, echo 'Got it — #N, [title].' before loading. See E-busy-gracious-fermi-001.",
   impact: "~5 min + confusion saved per incident avoided",
 };
 // errorTrends schema: { label, count7d, direction, detail?, fix? }
 const errorTrends = [
   {
-    label: "echo-confirm gap",
-    count7d: 1,
+    label: "mcp-behavior",
+    count7d: 2,
     direction: "up",
-    detail: "8 days as PRIORITY_ACTION. Longest-running single unactioned item. L-023 auto-promoted weekly audit Apr 12. One-line fix in handoff SKILL.md pickup step.",
-    fix: "Add to handoff SKILL.md: after presenting numbered list, if user replies with bare number, echo 'Got it — #N, [title].' before loading thread.",
+    detail: "edit_file schema (edits array vs old_string/new_string) — 3rd occurrence, now systemic. Same error hit in 3 separate sessions. Pattern: first MCP call in session uses wrong schema from habit.",
+    fix: "Cache in working memory: mcp__filesystem__edit_file uses edits:[{oldText,newText}] — NOT old_string/new_string. ToolSearch before first call if unsure.",
   },
   {
-    label: "session-archive sentinel",
+    label: "tool-scope",
     count7d: 1,
     direction: "up",
-    detail: "Last session-archive run: 2026-04-09T10:15 — 4 days ago. Backlog 214+ accumulating. Normal schedule is daily. 4 missed runs = ~80+ new unarchived sessions.",
-    fix: "Investigate session-archive scheduled task. Check launchd registration, proc.md sentinel step, last log entry. May need manual trigger.",
+    detail: "Agent dispatch defaulted to Python/subprocess instead of MCP tools. Agent prompt didn't specify execution environment.",
+    fix: "Agent prompts must specify: 'Execute using MCP tools only — no subprocess, no shell commands.'",
   },
   {
-    label: "CQR malformed row",
+    label: "meta/advisory",
     count7d: 1,
-    direction: "flat",
-    detail: "great-quirky-heisenberg Apr 7 row: 'low' in conf-range position, 'none' in ff-level. Invalid v2.0 values. 7th consecutive dashboard flag.",
-    fix: "Manual 2-minute fix: conf-range=[80-88], ff-level=Low in cqr-log.md.",
+    direction: "down",
+    detail: "Apr 7 launchd orphan — stale scheduled task confirmed orphaned, manual removal pending.",
+    fix: null,
   },
 ];
 
@@ -69,74 +70,74 @@ const errorTrends = [
 const TIPS_LABEL = "10 tips scored";
 const tips = [
   {
-    id: 1, score: 97, category: "Finance",
-    headline: "Treasury CD matures TOMORROW — Apr 14 action window is now",
-    detail: "relaxed-confident-hawking: $241.4K total CD maturities Apr 11+14. Apr 11 tranche already matured. Apr 14 is tomorrow — final execution day. Thread 13 days old with 'allocation planned' status. Confirm the allocation is locked before close of business today.",
-    action: "pickup treasury ladder april execution — confirm Apr 14 CD allocation is decided and ready to execute",
-    sessionPrompt: "pickup treasury ladder april execution",
+    id: 1, score: 95, category: "Finance",
+    headline: "T-bill auction window opens today — calendar reminder is live at 9am",
+    detail: "pensive-jolly-dijkstra thread locked: $110k transfer Ally→Schwab for T-bill auction ~Apr 15. Calendar event 'Check ALLY — T-Bill Funds' at 9am is the trigger. Confirm transfer before market open.",
+    action: "At 9am: log into Ally, verify $110k ready, initiate transfer to Schwab",
+    sessionPrompt: "pickup treasury t-bill execution — T-bill auction window check",
   },
   {
-    id: 2, score: 88, category: "Workflow",
-    headline: "Echo-confirm is 8 days — one line closes the longest-running PRIORITY_ACTION",
-    detail: "When user replies with a bare number to a numbered thread list, handoff skill loads without confirming which thread. E-busy-gracious-fermi-001 Apr 5. PRIORITY_ACTION every day since. L-023 auto-promoted weekly audit Apr 12. One line in handoff SKILL.md closes it permanently.",
-    action: "Open handoff SKILL.md, find numbered-list pickup step, add echo confirm line",
-    sessionPrompt: "pickup vault write enforcement — add echo-confirm fix to handoff skill",
+    id: 2, score: 87, category: "Workflow",
+    headline: "mcp__filesystem__edit_file schema confusion is now systemic (3rd occurrence)",
+    detail: "E-focused-modest-sagan-001 yesterday: used old_string/new_string instead of edits:[{oldText,newText}]. This is the 3rd separate session with this error. Systemic = add to CLAUDE.md hot-cache, not just lessons.md.",
+    action: "Add to CLAUDE.md: 'mcp__filesystem__edit_file uses edits:[{oldText,newText}] — NOT old_string/new_string'",
+    sessionPrompt: "I want to add the edit_file schema rule to CLAUDE.md to prevent the systemic confusion",
   },
   {
-    id: 3, score: 87, category: "Workflow",
-    headline: "It's Monday — set 3 intentions for the week before opening any threads",
-    detail: "IS_MONDAY=true. Week is open (calendar clear). Treasury matures tomorrow. Consulting sprint at day 18. 3 focused intentions before context-switching into threads prevents week from becoming reactive. Suggested: (1) treasury execution tomorrow, (2) one outreach message, (3) one thread closed.",
-    action: "Write 3 weekly intentions before picking up any thread",
-    sessionPrompt: "I want to plan my week — let's set 3 intentions for the week of Apr 13",
+    id: 3, score: 84, category: "Workflow",
+    headline: "peppers guide go-live (1d) has a DNS resolution issue — check before Dave sees it",
+    detail: "peppers.futureishere.net DNS may not have propagated. Go-live was yesterday. Quick check: ping peppers.futureishere.net or check DNS propagation tool before flagging complete.",
+    action: "Verify peppers.futureishere.net resolves before flagging go-live complete",
+    sessionPrompt: "Check DNS status for peppers.futureishere.net — it went live yesterday",
   },
   {
-    id: 4, score: 82, category: "Workflow",
-    headline: "Session-archive sentinel is 4 days stale — investigate before backlog grows further",
-    detail: "Last session-archive run: 2026-04-09T10:15 (4 days ago). Backlog was 214 as of Apr 9. Normal schedule is daily. 4 missed runs = ~80+ new unarchived sessions. Either the task stopped running or the sentinel write is failing silently.",
-    action: "Check session-archive scheduled task status; trigger manually if needed",
-    sessionPrompt: "I want to check the session-archive task — it hasn't run in 4 days",
+    id: 4, score: 82, category: "Agents",
+    headline: "Build a pre-flight schema check habit: ToolSearch before first MCP call each session",
+    detail: "3 consecutive mcp-behavior errors share one root cause: schema assumed from memory, not confirmed. ToolSearch costs 1 round-trip. Preventing one schema error saves 10+ minutes of debug + rollback.",
+    action: "Add to session-start checklist: ToolSearch for any MCP server before first call",
+    sessionPrompt: "I want to build a pre-flight schema check habit — help me add it to my session workflow",
   },
   {
     id: 5, score: 80, category: "Strategy",
-    headline: "Sprint day 18 — still zero outreach threads, all infrastructure",
-    detail: "Goals: AI Consulting Practice → first paying engagement by Sep 26, 2026. 10% of sprint elapsed. Every active thread is infrastructure (handoffs, vault, sessions, jen-config). No outreach, no discovery call, no LinkedIn message. One 20-minute message today beats another infrastructure week.",
-    action: "Open one outreach-focused thread: pick a target, draft one message",
+    headline: "Sprint Day 20 — T-bills resolve today, freeing 20 minutes for outreach",
+    detail: "Day 20 of AI Consulting sprint (22% elapsed). Treasury execution closes today. That's 20 minutes of cognitive overhead freed. Zero outreach threads open. Use the freed capacity today.",
+    action: "After T-bill check: open one outreach thread — pick a target, draft one message",
     sessionPrompt: "I want to work on consulting outreach — help me draft one message for a target",
   },
   {
-    id: 6, score: 77, category: "Strategy",
-    headline: "Open decisions block is built and waiting — sharp-cool-cerf (6d)",
-    detail: "sharp-cool-cerf delivered open-decisions-block.jsx at morning-dashboard/open-decisions-block.jsx 6 days ago. Ready for prototype integration. Each session that passes without integration is a decision visibility gap. 30-minute agent dispatch handles integration.",
-    action: "pickup open decisions block — dispatch integration agent to add to morning-dashboard-prototype.jsx",
-    sessionPrompt: "pickup open decisions block",
+    id: 6, score: 77, category: "Projects",
+    headline: "jen-config has 3 active threads — coordinate timing or Jen won't get the benefit",
+    detail: "drive manifest sync (6d), jen config audit automation (7d), jen setup day ready (13d). All prereqs complete. Setup day requires Jen's Windows machine. No scheduled date.",
+    action: "Check Jen's schedule — propose a specific setup day this week",
+    sessionPrompt: "pickup jen setup day — let's set a specific date with Jen",
   },
   {
-    id: 7, score: 75, category: "Workflow",
-    headline: "Jen setup day is 12 days old — coordinate timing or explicitly defer",
-    detail: "relaxed-elegant-maxwell (Apr 1, 12d): Consolidated setup day handoff ready. All blockers cleared (manifest v3.7.0, import prompt V4.5.0 uploaded). Needs execution on Jen's Windows machine. No time pressure was set. Either coordinate a specific day with Jen or explicitly defer with a date.",
-    action: "pickup jen setup day — set a date or defer explicitly",
-    sessionPrompt: "pickup jen setup day",
+    id: 7, score: 75, category: "Obsidian",
+    headline: "Vault is healthy (22h, ok) — no action needed today",
+    detail: "Vault last written 22 hours ago. Healthy cadence. No stale fact alerts. Vault write enforcement Option A (handoff advisory) is working. Option B (scheduled enrichment) still pending but not urgent.",
+    action: null,
+    sessionPrompt: null,
   },
   {
-    id: 8, score: 73, category: "Data",
-    headline: "CQR malformed row: 7 consecutive flags — 2-minute fix that keeps recurring",
-    detail: "great-quirky-heisenberg Apr 7 row has 'low' in conf-range position and 'none' in ff-level — both invalid v2.0 schema values. Flagged 7 consecutive dashboard runs. Correct values: conf-range=[80-88], ff-level=Low. Direct edit in cqr-log.md.",
-    action: "Fix cqr-log.md: great-quirky-heisenberg row, set conf-range=[80-88], ff-level=Low",
-    sessionPrompt: "Fix the CQR malformed row for great-quirky-heisenberg in cqr-log.md",
+    id: 8, score: 73, category: "Automation",
+    headline: "Treasury research process is a repeatable pattern — worth templating",
+    detail: "pensive-jolly-dijkstra delivered a full CD maturity + T-bill ladder research workflow. Same process applies to next CD tranche. 30-minute session to extract as reusable template saves 2+ hours next cycle.",
+    action: "After treasury closes: schedule 30-min session to extract research template",
+    sessionPrompt: "I want to template the treasury ladder research process from pensive-jolly-dijkstra",
   },
   {
-    id: 9, score: 71, category: "Workflow",
-    headline: "Bootstrap pastes (vigilant-sweet-cerf, 7d) — PREFS_KERNEL_V3 activates in 5 minutes",
-    detail: "vigilant-sweet-cerf (Apr 6, 7d): Global Instructions PASTE and User Preferences PASTE delivered as copyable blocks. PREFS_KERNEL_V3 activates only after pasting both into Cowork Settings. Now 7 days unclosed. Bootstrap suboptimal every session until pasted.",
-    action: "Cowork Settings → paste PASTE-cowork-global-claude-md.txt and PASTE-user-preferences.txt from CLAUDE-md-fix/",
-    sessionPrompt: "pickup bootstrap pastes delivered — I'm ready to paste Cowork settings",
+    id: 9, score: 70, category: "Session Skill",
+    headline: "Handoff skill Stable but echo-confirm gap (9d) is a regression signal",
+    detail: "Handoff skill marked Stable, but 9 consecutive days with PRIORITY_ACTION unfixed is a Stable→regression indicator. Stable means 'no known gaps.' One open gap is one too many.",
+    action: "Fix echo-confirm in handoff SKILL.md — one line closes the gap and restores Stable status",
+    sessionPrompt: "pickup vault write enforcement — add echo-confirm line to handoff skill pickup step",
   },
   {
-    id: 10, score: 69, category: "Workflow",
-    headline: "Dispatch a maintenance agent to check why session-archive hasn't run in 4 days",
-    detail: "session-archive sentinel last at Apr 9T10:15 — 4 days stale. Backlog of 214+ sessions accumulating. Agent can check launchd registration, proc.md sentinel step, and last log entry. 10-minute parallel dispatch while you work on treasury.",
-    action: "Dispatch agent: check session-archive scheduled task — launchd status, proc.md sentinel, last log",
-    sessionPrompt: "Dispatch an agent to investigate why session-archive hasn't run in 4 days",
+    id: 10, score: 68, category: "Strategy",
+    headline: "Flat yield curve + 50% utility AI ROI gap — both signal pivot timing in consulting",
+    detail: "Deloitte 2026 P&U Outlook: flat curve compressing margins. Kyndryl: utilities AI ROI gap at 50%. Both are client pain points you can address now. Combine into one sharp positioning statement before next outreach.",
+    action: "Draft a one-sentence positioning statement combining flat-curve + AI ROI gap angles",
+    sessionPrompt: "Help me draft a consulting positioning statement using the Deloitte P&U flat-curve and Kyndryl AI ROI gap signals",
   },
 ];
 
@@ -154,44 +155,59 @@ const SKILLS_PROGRESS = [
 
 // ─── Thread Pulse ────────────────────────────────────────────────────────────
 const threads = [
-  { title: "vault write enforcement",        project: "Claude",     status: "active", ageLabel: "4d",  summary: "Option A deployed (handoff v2.0.4 advisory verification); Option B (scheduled enrichment task) pending",    pickupCmd: "pickup vault write enforcement",          stale: false },
-  { title: "drive manifest sync",            project: "jen-config", status: "active", ageLabel: "5d",  summary: "manifest.json synced to Drive (v3.7.0); setup day still deferred",                                           pickupCmd: "pickup drive manifest sync",              stale: false },
-  { title: "chat rename removal",            project: "Claude",     status: "active", ageLabel: "5d",  summary: "Step 9 excised from handoff skill v2.0.3; daemon installed but idle — optional cleanup",                    pickupCmd: "pickup chat rename removal",              stale: false },
-  { title: "log health automation",          project: "Claude",     status: "active", ageLabel: "5d",  summary: "session-archive.log and deploy-log.md parsed in Step 3j; escalates SYSTEMS_STATUS on failures",            pickupCmd: "pickup log health automation",            stale: false },
-  { title: "session archive sentinel",       project: "Claude",     status: "active", ageLabel: "5d",  summary: "Sentinel pattern confirmed; proc.md lacks write step — sentinel 4 days stale (last run Apr 9)",             pickupCmd: "pickup session archive sentinel verified", stale: false },
-  { title: "jen config audit automation",    project: "jen-config", status: "active", ageLabel: "6d",  summary: "Nightly jen-config-audit scheduled; manifest v3.4.0 with 3 new tasks, 4 doc skills",                       pickupCmd: "pickup jen config audit automation",      stale: false },
-  { title: "open decisions block",           project: "Claude",     status: "active", ageLabel: "6d",  summary: "open-decisions-block.jsx ready in morning-dashboard/ — prototype integration pending",                       pickupCmd: "pickup open decisions block",             stale: false },
-  { title: "bootstrap phase 1 elimination",  project: "Claude",     status: "active", ageLabel: "7d",  summary: "PREFS_KERNEL_V3 deployed; 1 open item: investigate ToolSearch elimination via always-available filesystem MCP", pickupCmd: "pickup bootstrap phase 1 elimination",   stale: false },
-  { title: "bootstrap pastes delivered",     project: "Claude",     status: "active", ageLabel: "7d",  summary: "Global Instructions + User Preferences PASTE blocks delivered; Dave must paste both into Cowork Settings",   pickupCmd: "pickup bootstrap pastes delivered",       stale: true  },
-  { title: "treasury ladder april execution",project: "Finance",    status: "active", ageLabel: "13d", summary: "CD maturities April 11+14 ($241.4K total); Apr 14 is TOMORROW — final execution day",                      pickupCmd: "pickup treasury ladder april execution",  stale: true  },
-  { title: "jen setup day — ready",          project: "jen-config", status: "active", ageLabel: "12d", summary: "All prereqs complete, manifest v3.7.0, V4.5.0 canonical — awaiting Jen's Windows machine",                  pickupCmd: "pickup jen setup day ready to execute",  stale: true  },
-  { title: "maquis inc research",            project: "Claude",     status: "active", ageLabel: "11d", summary: "Deep research on Maquis Inc. (NY, Sept 2025) completed; no follow-up action opened",                        pickupCmd: "pickup maquis inc research",              stale: true  },
-  { title: "jen config project scoping",     project: "jen-config", status: "active", ageLabel: "10d", summary: "jen-config scoped as standalone Project; 3 index hygiene items executed",                                   pickupCmd: "pickup jen config project scoping",       stale: true  },
-  { title: "dashboard tips overhaul",        project: "Claude",     status: "active", ageLabel: "8d",  summary: "No-op session — loaded quirky-magical-meitner, confirmed state; all pending items carry forward",            pickupCmd: "pickup dashboard tips overhaul",          stale: true  },
-  { title: "session archive drive fix",      project: "Claude",     status: "loaded", ageLabel: "11d", summary: "First run completed locally; Drive upload blocked — relay config issue documented",                         pickupCmd: "pickup session archive drive fix",        stale: true  },
-  { title: "vault sweep deployed",           project: "Claude",     status: "loaded", ageLabel: "8d",  summary: "Vault sweep wired into handoff skill v2.0.1 Write Flow; AE-015 written",                                   pickupCmd: "pickup vault sweep deployed",             stale: false },
-  { title: "delete stale scheduled task",    project: "Claude",     status: "active", ageLabel: "7d",  summary: "skill-token-optimization-run confirmed orphaned; needs manual Cowork UI removal",                           pickupCmd: "pickup delete stale scheduled task",      stale: false },
+  { title: "treasury t-bill execution",      project: "Finance",    status: "active", ageLabel: "1d",  summary: "T-bill auction window ~Apr 15. Transfer $110k Ally→Schwab. Calendar reminder set 9am today.",                                                         pickupCmd: "pickup treasury t-bill execution",          stale: false },
+  { title: "peppers guide go-live",          project: "Claude",     status: "active", ageLabel: "1d",  summary: "peppers.futureishere.net deployed yesterday; DNS resolution check pending",                                                                            pickupCmd: "pickup peppers guide go-live",              stale: false },
+  { title: "cqr log row fix",                project: "Claude",     status: "active", ageLabel: "1d",  summary: "great-quirky-heisenberg Apr 7 row malformed (8 consecutive flags); direct edit needed: conf-range=[80-88], ff-level=Low",                             pickupCmd: "pickup cqr log row fix",                   stale: false },
+  { title: "jen config v3.8.0 sync",         project: "jen-config", status: "active", ageLabel: "1d",  summary: "v3.8.0 manifest changes identified; sync to Drive + update setup day checklist pending",                                                              pickupCmd: "pickup jen config v3.8.0 sync",             stale: false },
+  { title: "vault write enforcement",        project: "Claude",     status: "active", ageLabel: "5d",  summary: "Option A deployed (handoff v2.0.4 advisory verification); Option B (scheduled enrichment task) pending",                                              pickupCmd: "pickup vault write enforcement",            stale: false },
+  { title: "drive manifest sync",            project: "jen-config", status: "active", ageLabel: "6d",  summary: "manifest.json synced to Drive (v3.7.0); setup day still deferred",                                                                                   pickupCmd: "pickup drive manifest sync",                stale: false },
+  { title: "chat rename removal",            project: "Claude",     status: "active", ageLabel: "6d",  summary: "Step 9 excised from handoff skill v2.0.3; daemon installed but idle — optional cleanup",                                                             pickupCmd: "pickup chat rename removal",                stale: false },
+  { title: "log health automation",          project: "Claude",     status: "active", ageLabel: "6d",  summary: "session-archive.log and deploy-log.md parsed in Step 3j; escalates SYSTEMS_STATUS on failures",                                                     pickupCmd: "pickup log health automation",              stale: false },
+  { title: "session archive sentinel",       project: "Claude",     status: "active", ageLabel: "7d",  summary: "Sentinel pattern confirmed; proc.md lacks write step — sentinel 5 days stale (last run Apr 9)",                                                      pickupCmd: "pickup session archive sentinel verified",  stale: true  },
+  { title: "jen config audit automation",    project: "jen-config", status: "active", ageLabel: "7d",  summary: "Nightly jen-config-audit scheduled; manifest v3.4.0 with 3 new tasks, 4 doc skills",                                                               pickupCmd: "pickup jen config audit automation",        stale: true  },
+  { title: "open decisions block",           project: "Claude",     status: "active", ageLabel: "7d",  summary: "open-decisions-block.jsx ready in morning-dashboard/ — prototype integration pending",                                                               pickupCmd: "pickup open decisions block",               stale: true  },
+  { title: "bootstrap phase 1 elimination",  project: "Claude",     status: "active", ageLabel: "8d",  summary: "PREFS_KERNEL_V3 deployed; 1 open item: investigate ToolSearch elimination via always-available filesystem MCP",                                    pickupCmd: "pickup bootstrap phase 1 elimination",     stale: true  },
+  { title: "bootstrap pastes delivered",     project: "Claude",     status: "active", ageLabel: "8d",  summary: "Global Instructions + User Preferences PASTE blocks delivered; Dave must paste both into Cowork Settings",                                         pickupCmd: "pickup bootstrap pastes delivered",         stale: true  },
+  { title: "dashboard tips overhaul",        project: "Claude",     status: "active", ageLabel: "9d",  summary: "No-op session — loaded quirky-magical-meitner, confirmed state; all pending items carry forward",                                                  pickupCmd: "pickup dashboard tips overhaul",            stale: true  },
+  { title: "maquis inc research",            project: "Claude",     status: "active", ageLabel: "12d", summary: "Deep research on Maquis Inc. (NY, Sept 2025) completed; no follow-up action opened",                                                                pickupCmd: "pickup maquis inc research",               stale: true  },
+  { title: "jen setup day — ready",          project: "jen-config", status: "active", ageLabel: "13d", summary: "All prereqs complete, manifest v3.7.0, V4.5.0 canonical — awaiting Jen's Windows machine",                                                         pickupCmd: "pickup jen setup day ready to execute",    stale: true  },
+  { title: "treasury ladder april execution",project: "Finance",    status: "active", ageLabel: "14d", summary: "CD maturities April 11+14 ($241.4K total); Apr 14 execution day — confirm allocation complete",                                                    pickupCmd: "pickup treasury ladder april execution",   stale: true  },
 ];
 const THREAD_COUNT = 17;
-const THREAD_STALE_COUNT = 7;
+const THREAD_STALE_COUNT = 9;
 
 // ─── Morning Intent ──────────────────────────────────────────────────────────
 const morningIntent = [
-  { rank: 1, text: "Treasury CD matures TOMORROW (Apr 14) — confirm the allocation is locked before end of day. Thread 13 days old. This is the last action window.", source: "goal", pickupCmd: "pickup treasury ladder april execution" },
-  { rank: 2, text: "End the echo-confirm streak: 8 days as PRIORITY_ACTION. One line in handoff SKILL.md. Highest-ROI 5-minute fix in the system.", source: "systems", pickupCmd: "pickup vault write enforcement — I want to add the echo-confirm fix to the handoff skill." },
-  { rank: 3, text: "Monday: set 3 focused intentions before opening threads. Week is open. Treasury executes tomorrow. Sprint day 18.", source: "goal", pickupCmd: "I want to plan my week — let's set 3 intentions for the week of Apr 13" },
+  { rank: 1, text: "T-bill auction window opens today (~Apr 15). Calendar alert at 9am: verify $110k Ally→Schwab transfer. Close the pensive-jolly-dijkstra thread.", source: "goal", pickupCmd: "pickup treasury t-bill execution" },
+  { rank: 2, text: "End the echo-confirm streak: 9 days as PRIORITY_ACTION. One line in handoff SKILL.md. Highest-ROI 5-minute fix in the system.", source: "systems", pickupCmd: "pickup vault write enforcement — I want to add the echo-confirm fix to the handoff skill." },
+  { rank: 3, text: "Cache mcp__filesystem__edit_file schema: edits:[{oldText,newText}]. 3rd systemic occurrence yesterday. Add to CLAUDE.md hot-cache today.", source: "systems", pickupCmd: "I want to add the edit_file schema rule to CLAUDE.md hot-cache" },
 ];
 
 // ─── Consulting Signals ───────────────────────────────────────────────────────
-const consultSignals = [];
-const CONSULT_SIGNAL_DATE = "2026-04-13";
+const consultSignals = [
+  {
+    id: 1,
+    source: "Deloitte 2026 P&U Outlook",
+    signal: "Flat yield curve compressing utility margins — capital allocation under pressure",
+    relevance: "Direct client pain: regulated utilities face margin compression + capex obligations simultaneously. This is a CFO-level conversation opener.",
+    talkingPoint: "With margins compressed and capex commitments unchanged, the question isn't whether to optimize — it's how fast.",
+  },
+  {
+    id: 2,
+    source: "Kyndryl AI in Utilities (2026)",
+    signal: "50% of utility AI initiatives failing to reach production ROI targets",
+    relevance: "Execution gap = consulting opportunity. Most clients have AI pilots; few have scaled ROI. You can position as the bridge.",
+    talkingPoint: "Half of utility AI programs stall between pilot and production. The gap isn't technology — it's integration and change readiness.",
+  },
+];
+const CONSULT_SIGNAL_DATE = "2026-04-14";
 
 // ─── Goal Anchor ──────────────────────────────────────────────────────────────
 const goalAnchor = {
   label: "AI Consulting Practice",
   target: "First paying engagement",
-  milestone: "Day 18 of sprint",
-  elapsedPct: 10,
+  milestone: "Day 20 of sprint",
+  elapsedPct: 22,
   horizonLabel: "Sep 26, 2026",
 };
 
@@ -200,17 +216,17 @@ const mondayScorecard = null;
 
 // ─── Dashboard Meta ───────────────────────────────────────────────────────────
 const dashboardMeta = {
-  version: "V008-20260413",
+  version: "V008-20260414",
   changelog: [
-    { date: "2026-04-13", type: "changed", item: "Thread Pulse updated",        note: "17 threads (7 stale, +2 new). Treasury CD matures TOMORROW Apr 14. Echo-confirm 8d PRIORITY_ACTION." },
-    { date: "2026-04-12", type: "changed", item: "Thread Pulse updated",        note: "17 threads (5 stale). Treasury Apr 14 tranche live. Echo-confirm at 7 days PRIORITY_ACTION." },
-    { date: "2026-04-01", type: "added",   item: "Dashboard Meta block",         note: "Self-documenting: block inventory, changelog, and next-evolution ideas with copy prompts." },
-    { date: "2026-03-28", type: "added",   item: "Morning Intent block",          note: "Top 3 synthesized priorities from threads, calendar, goals, systems." },
-    { date: "2026-03-28", type: "added",   item: "Goal Anchor block",             note: "90-day sprint progress bar driven by goals.json." },
-    { date: "2026-03-28", type: "added",   item: "Consulting Signal block",       note: "3 curated industry signals, each connected to practice positioning." },
-    { date: "2026-03-27", type: "changed", item: "Calendar → sidebar",            note: "Shifted from main column to sidebar so tips and threads get more vertical space." },
-    { date: "2026-03-26", type: "added",   item: "Thread Pulse block",            note: "Full thread list with age, project, stale flag, and copyable pickup commands." },
-    { date: "2026-03-25", type: "changed", item: "Tip ID copy",                   note: "Each tip gets a copyable ID for the tip-rating feedback loop." },
+    { date: "2026-04-14", type: "changed", item: "LIVE DATA updated for Apr 14",      note: "3 events (1 conflict), 3 errors yesterday, 17 threads (9 stale, +4 new: t-bill exec, peppers go-live, cqr fix, jen v3.8.0). 2 consulting signals added. Sprint Day 20." },
+    { date: "2026-04-13", type: "changed", item: "Thread Pulse updated",               note: "17 threads (7 stale, +2 new). Treasury CD matures TOMORROW Apr 14. Echo-confirm 8d PRIORITY_ACTION." },
+    { date: "2026-04-12", type: "changed", item: "Thread Pulse updated",               note: "17 threads (5 stale). Treasury Apr 14 tranche live. Echo-confirm at 7 days PRIORITY_ACTION." },
+    { date: "2026-04-01", type: "added",   item: "Dashboard Meta block",               note: "Self-documenting: block inventory, changelog, and next-evolution ideas with copy prompts." },
+    { date: "2026-03-28", type: "added",   item: "Morning Intent block",               note: "Top 3 synthesized priorities from threads, calendar, goals, systems." },
+    { date: "2026-03-28", type: "added",   item: "Goal Anchor block",                  note: "90-day sprint progress bar driven by goals.json." },
+    { date: "2026-03-28", type: "added",   item: "Consulting Signal block",            note: "3 curated industry signals, each connected to practice positioning." },
+    { date: "2026-03-27", type: "changed", item: "Calendar → sidebar",                 note: "Shifted from main column to sidebar so tips and threads get more vertical space." },
+    { date: "2026-03-26", type: "added",   item: "Thread Pulse block",                 note: "Full thread list with age, project, stale flag, and copyable pickup commands." },
   ],
   nextIdeas: [
     {
@@ -227,11 +243,6 @@ const dashboardMeta = {
       idea: "Weekly rhythm view",
       desc: "Which day is deep work, outreach, Nika, rest. Puts each daily card in context of the week's intended shape.",
       sessionPrompt: "I want to add a weekly rhythm block to my morning dashboard showing my intended day-type for each day (deep work / outreach / family / rest). Draft the data structure and a React component matching the dashboard's visual style.",
-    },
-    {
-      idea: "Signal talking-point layer",
-      desc: "Each signal has a 'why it matters' note. Next: a one-sentence talking point ready to paste in outreach or a discovery call.",
-      sessionPrompt: "Enhance the Consulting Signal section of my morning dashboard: each signal should include a ready-to-paste talking point I can use verbatim in outreach or a call. Update the ConsultingSignalSection component and the dashboardMeta changelog.",
     },
   ],
 };
@@ -897,6 +908,13 @@ function GoalAnchorCard() {
 
 // ─── Consulting Signals ───────────────────────────────────────────────────────
 function ConsultingSignalSection() {
+  const [copiedIdx, setCopiedIdx] = useState(null);
+  const copy = (text, i, e) => {
+    if (e) e.stopPropagation();
+    copyText(text);
+    setCopiedIdx(i);
+    setTimeout(() => setCopiedIdx(null), 1500);
+  };
   return (
     <div style={sectionCard}>
       <div style={sectionHeader}>
@@ -906,13 +924,22 @@ function ConsultingSignalSection() {
       <div style={{ padding: "6px 0" }}>
         {consultSignals.length === 0 ? (
           <div style={{ padding: "10px 18px", fontFamily: F.body, fontSize: 13, color: C.inkSoft }}>Quiet week — no new signals to surface.</div>
-        ) : consultSignals.map((s, i) => (
-          <div key={i} style={{ padding: "11px 18px", borderBottom: i < consultSignals.length - 1 ? `1px solid ${C.border}` : "none" }}>
-            <div style={{ fontFamily: F.body, fontSize: 13, fontWeight: 500, color: C.ink, lineHeight: 1.35, marginBottom: 5 }}>{s.headline}</div>
-            <div style={{ fontFamily: F.body, fontSize: 12, color: C.inkMid, lineHeight: 1.5, marginBottom: 5 }}>{s.why}</div>
-            <div style={{ fontFamily: F.mono, fontSize: 10, color: C.inkFaint }}>{s.source}</div>
-          </div>
-        ))}
+        ) : consultSignals.map((s, i) => {
+          const isCopied = copiedIdx === i;
+          return (
+            <div key={i} style={{ padding: "11px 18px", borderBottom: i < consultSignals.length - 1 ? `1px solid ${C.border}` : "none" }}>
+              <div style={{ fontFamily: F.body, fontSize: 13, fontWeight: 500, color: C.ink, lineHeight: 1.35, marginBottom: 5 }}>{s.headline}</div>
+              <div style={{ fontFamily: F.body, fontSize: 12, color: C.inkMid, lineHeight: 1.5, marginBottom: 7 }}>{s.why}</div>
+              {s.talkingPoint && (
+                <div style={{ background: C.sagePale, border: `1px solid ${C.border}`, borderRadius: 5, padding: "8px 11px", marginBottom: 7 }}>
+                  <div style={{ fontFamily: F.body, fontSize: 12, color: C.sageDark, lineHeight: 1.5, marginBottom: 6 }}>{s.talkingPoint}</div>
+                  <button onClick={(e) => copy(s.talkingPoint, i, e)} style={{ padding: "2px 9px", borderRadius: 3, border: "none", cursor: "pointer", background: isCopied ? C.green : C.sagePale, color: isCopied ? "#fff" : C.sageDark, fontFamily: F.mono, fontSize: 10, fontWeight: 600, transition: "all 150ms ease", border: `1px solid ${C.border}` }}>{isCopied ? "✓ Copied" : "Copy talking point"}</button>
+                </div>
+              )}
+              <div style={{ fontFamily: F.mono, fontSize: 10, color: C.inkFaint }}>{s.source}</div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
