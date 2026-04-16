@@ -12,212 +12,106 @@ import { useState } from "react";
 // LIVE DATA — Claude replaces ONLY this section. Component code is frozen.
 // ═══════════════════════════════════════════════════════════════════════════
 
-const BRIEFING_DATE = "Wednesday, Apr 15";
+const BRIEFING_DATE = "Thursday, Apr 16";
 const BRIEFING_TIME = "7:30a";
-const TIP_DATE = "0415.0730";
+const TIP_DATE = "0416.0730";
 const GREETING = "Good morning, Dave.";
-
-// Calendar data
-const CAL_SUMMARY = "9 events · 2 conflicts";
+const CAL_SUMMARY = "6 busy blocks \u00b7 solid 10a-4p";
 const calEvents = [
-  { id: 1, time: "10:00a", end: "11:00a", dur: "1h", title: "Tutoring: Kate", color: "#42d692", prep: "Jen's tutoring session — Zoom open, keep background quiet.", allDay: false, conflict: true },
-  { id: 2, time: "10:00a", end: "10:30a", dur: "30m", title: "Work: Busy", color: "#cd74e6", prep: null, allDay: false, conflict: true },
-  { id: 3, time: "11:30a", end: "12:00p", dur: "30m", title: "Work: Busy", color: "#cd74e6", prep: null, allDay: false, conflict: false },
-  { id: 4, time: "12:15p", end: "2:15p", dur: "2h", title: "Emma in 🇺🇦 — Dave's Zoom needed", color: "#42d692", prep: "⚠️ Dave's Zoom login required — Emma calls from Ukraine. Sign in 10 min early. Overlaps Work Busy 12:30–2p.", allDay: false, conflict: true },
-  { id: 5, time: "12:30p", end: "2:00p", dur: "1.5h", title: "Work: Busy", color: "#cd74e6", prep: null, allDay: false, conflict: true },
-  { id: 6, time: "2:00p", end: "3:00p", dur: "1h", title: "Work: Busy", color: "#cd74e6", prep: null, allDay: false, conflict: false },
-  { id: 7, time: "3:00p", end: "4:00p", dur: "1h", title: "Work: Tentative", color: "#cd74e6", prep: null, allDay: false, conflict: false },
-  { id: 8, time: "4:00p", end: "5:00p", dur: "1h", title: "Work: Busy", color: "#cd74e6", prep: null, allDay: false, conflict: false },
-  { id: 9, time: "6:00p", end: "10:00p", dur: "4h", title: "Westfield Games", color: "#42d692", prep: "4-hour block tonight. Wind down by 5:30p.", allDay: false, conflict: false },
+  { id: 1, time: "9:00a", end: "9:30a", dur: "30m", title: "Work: Busy", color: "#cd74e6", prep: "30-min window \u2014 use it for manifest script or cowork settings paste before work starts.", allDay: false, conflict: null },
+  { id: 2, time: "10:00a", end: "11:00a", dur: "1h", title: "Work: Busy", color: "#cd74e6", prep: null, allDay: false, conflict: "Back-to-back: \u2018Work: Busy\u2019 continues 11:00a\u20132:30p with no break" },
+  { id: 3, time: "11:00a", end: "11:30a", dur: "30m", title: "Work: Busy", color: "#cd74e6", prep: null, allDay: false, conflict: null },
+  { id: 4, time: "11:30a", end: "2:30p", dur: "3h", title: "Work: Busy", color: "#cd74e6", prep: null, allDay: false, conflict: null },
+  { id: 5, time: "2:30p", end: "3:00p", dur: "30m", title: "Work: Busy", color: "#cd74e6", prep: null, allDay: false, conflict: null },
+  { id: 6, time: "3:00p", end: "4:00p", dur: "1h", title: "Work: Busy", color: "#cd74e6", prep: null, allDay: false, conflict: null },
 ];
 const IS_MONDAY = false;
 const weekShape = [];
-
-// Systems health data
 const SYSTEMS_STATUS = "amber";
-const SYSTEMS_SUMMARY = "2 HIGH-effort errors yesterday (meta + deploy/build) — 50 min burned. 5 errors in 7d. mcp-behavior still systemic.";
-const ERROR_COUNT_24H = 2;
+const SYSTEMS_SUMMARY = "\u26a0 Log: session-archive partial today (bash timeout, Drive backlog=14). mcp-behavior + meta both recurring (2\u00d7 each, 7d). HIGH-cost errors Apr 14 (45+ tool calls).";
+const ERROR_COUNT_24H = 1;
 const ERROR_COUNT_7D = 5;
 const PRIORITY_ACTION = {
-  title: "Context-parsing miss on continuation sessions",
-  fix: "When session opens on a pickup and first message contains diagnostic text (numbers, header values, error text), cross-reference against handoff Pending items BEFORE bootstrap. E-kind-tender-goldberg-001.",
-  impact: "~20 tool calls saved per instance avoided",
+  title: "Session-archive manifest pending (apply_manifest_update_20260416.py)",
+  fix: "Run apply_manifest_update_20260416.py in /Users/davenichols/AI/Claude/session-backups/ \u2014 14 unregistered sessions. Check if 20260415 version also still pending.",
+  impact: "Manifest stays in sync; prevents Drive backlog accumulation over time.",
 };
 const errorTrends = [
-  {
-    label: "meta (context-parsing)",
-    count7d: 1,
-    direction: "up",
-    detail: "Terse opening message in pickup session treated as generic status text instead of diagnostic payload — lost full context, forced re-orientation twice. HIGH effort (20+ tool calls).",
-    fix: "Cross-reference diagnostic vocabulary in opening message against handoff Pending before any other action.",
-  },
-  {
-    label: "deploy/build (Netlify topology)",
-    count7d: 2,
-    direction: "up",
-    detail: "Assumed one Netlify project — diagnosed React/bundle/CDN for 15+ tool calls before discovering peppers was aliased to a dead separate project. AE-022 is live but wasn't applied.",
-    fix: "AE-022: 200+content-length:0 → enumerate Netlify projects FIRST. Deploy-pipeline.md FIRST-CHECK section documents this.",
-  },
-  {
-    label: "mcp-behavior (schema)",
-    count7d: 3,
-    direction: "flat",
-    detail: "edit_file uses edits:[{oldText,newText}] array; google_drive_fetch requires document_ids array. Both confused with similar-looking params. Systemic (3rd+ occurrence).",
-    fix: "ToolSearch before first MCP call each session. Cache: mcp edit = edits array; drive fetch = document_ids array.",
-  },
+  { label: "mcp-behavior", count7d: 2, direction: "flat", detail: "edit_file schema confusion (3rd total occurrence): edits array vs old_string/new_string. Also google_drive_fetch param confusion.", fix: "/Users/ path \u2192 mcp__filesystem__edit_file with edits:[{oldText,newText}] array. /sessions/ path \u2192 built-in Edit with old_string/new_string." },
+  { label: "meta", count7d: 2, direction: "flat", detail: "Context-parsing miss (HIGH, ~20 tool calls) + registry gap (netlify-pat-renewal-reminder missing proc-registry.json entry).", fix: "Continuation pickup: terse message with numbers/headers \u2192 match against handoff Pending FIRST. Registry: add entry on task creation." },
+  { label: "deploy/build", count7d: 1, direction: "down", detail: "Netlify multi-project topology assumption (HIGH, ~40 tool calls). AE-022 was live but not applied.", fix: "AE-022 first-check: enumerate Netlify projects via API before ANY diagnosis on content-length:0." },
 ];
-
-// Tips data
 const TIPS_LABEL = "10 tips scored";
+// T01=87 Automation, T02=84 Workflow, T03=82 Calendar, T04=80 Agents,
+// T05=79 Projects, T06=77 Automation, T07=75 Obsidian, T08=73 Session Skill,
+// T09=72 Confirmatory, T10=70 Workflow
 const tips = [
-  {
-    id: 1, score: 95, category: "Finance",
-    headline: "T-bill auction window is open NOW — execute at Schwab",
-    detail: "pensive-jolly-dijkstra thread: $110k ready, 8-week T-bill at Schwab. Flat curve (3bps 8W–26W) confirmed. Auction closes ~1pm ET. Transfer Ally→Schwab if not done. Place auction order today.",
-    action: "Schwab → Trade → Fixed Income → T-Bills → New Issue → 8-Week → Auction",
-    sessionPrompt: "pickup treasury t-bill execution",
-  },
-  {
-    id: 2, score: 88, category: "Workflow",
-    headline: "AE-022 wasn't applied yesterday — Netlify topology check must be first",
-    detail: "E-kind-tender-goldberg-002 (HIGH effort, ~40 min): React/bundle diagnosis ran 15+ tool calls before discovering peppers was aliased to a dead Netlify project. AE-022 is in CLAUDE.md and deploy-pipeline.md FIRST-CHECK. The rule must fire before any other diagnosis when 200+content-length:0 is observed.",
-    action: "Internalize: 200+content-length:0 = enumerate Netlify projects immediately, not React, not CDN, not bundle.",
-    sessionPrompt: "Read deploy-pipeline.md FIRST-CHECK section and confirm AE-022 is understood.",
-  },
-  {
-    id: 3, score: 86, category: "Calendar",
-    headline: "Emma Zoom at 12:15p — be signed into Dave's Zoom by 12:05p",
-    detail: "Emma calls from Ukraine on Dave's Zoom account. Overlaps Work Busy 12:30–2p. Any delay on Dave's side drops the call. Sign in at 12:05p at the latest. Work block conflict is unavoidable — keep audio on during overlap if needed. Westfield Games tonight 6–10p.",
-    action: "Set a 12:05p reminder if you don't have one. Verify Zoom is signed in as Dave before.",
-    sessionPrompt: null,
-  },
-  {
-    id: 4, score: 84, category: "Workflow",
-    headline: "Continuation session opens: diagnostic text = match against handoff Pending first",
-    detail: "E-kind-tender-goldberg-001 (HIGH effort, ~20 tool calls): 'Steps 1-4 done. Step 4: content-length 0' was the direct diagnostic answer — not a bootstrap ack. Lost context, re-oriented twice. L-032 covers token scanning but needs explicit diagnostic vocabulary matching against Pending items.",
-    action: "Rule: terse opening message with numbers/errors/headers → scan handoff Pending before anything else.",
-    sessionPrompt: null,
-  },
-  {
-    id: 5, score: 82, category: "Projects",
-    headline: "Cowork settings paste has been open 10 days — 5 minutes to close it",
-    detail: "awesome-nifty-cannon thread (active): PREFS_KERNEL_V3 pastes ready in CLAUDE-md-fix/. Paste Global Instructions + User Preferences into Cowork Settings. Two files, two pastes. Thread closes immediately.",
-    action: "CLAUDE-md-fix/PASTE-cowork-global-claude-md.txt → Cowork Settings → Global Instructions. Then PASTE-user-preferences.txt → User Preferences.",
-    sessionPrompt: "pickup cowork settings paste",
-  },
-  {
-    id: 6, score: 78, category: "Agents",
-    headline: "Agent prompts for proc.md tasks must specify 'MCP tools only'",
-    detail: "E-local_faeb3230-001: dispatched agent with 'run the proc' — agent defaulted to Python/subprocess, took 3 round trips to fix. Any agent that executes a proc.md task needs explicit: 'Use MCP tools (mcp__filesystem__*, mcp__session_info__*). No Python, no bash for core logic.' Maintenance theme: build this into your agent dispatch templates.",
-    action: "Add to dispatch template library: MCP-tools-only instruction as a standard constraint.",
-    sessionPrompt: "Help me build an agent dispatch template library with standard constraints for MCP-tools-only tasks.",
-  },
-  {
-    id: 7, score: 76, category: "Automation",
-    headline: "Session-archive manifest has a pending script to run",
-    detail: "session-archive ran this morning (917 total, 3 new). Manifest currently shows 914 — apply_manifest_update_20260415.py is in session-backups/ to close the gap. Pattern-capture: manifest drift is recurring; adding auto-apply step to proc.md would eliminate this manual step permanently.",
-    action: "Run: python3 ~/AI/Claude/session-backups/apply_manifest_update_20260415.py",
-    sessionPrompt: "pickup session archive sentinel verified",
-  },
-  {
-    id: 8, score: 74, category: "Obsidian",
-    headline: "EverBank/FRESHSTART research ready for vault — docx update still pending",
-    detail: "focused-bright-turing thread: ~75% confidence EverBank 4.10% stacks with FRESHSTART. EverBank featured on FRESHSTART landing page (strong signal). Write to reference/finance.md before context fades. Workflow theme: treasury + EverBank + FRESHSTART stacking rationale all live in one Finance reference note.",
-    action: "Write /Obsidian/Claude/reference/finance.md with: T-bill decision rationale, EverBank stacking confidence, FRESHSTART details.",
-    sessionPrompt: "pickup raisin freshstart + everbank stacking research",
-  },
-  {
-    id: 9, score: 72, category: "Session Skill",
-    headline: "Deploy + archive health confirmed clean — good restart baseline",
-    detail: "Deploy log: last successful deploy 2026-04-14 16:57 (Netlify OK, 926 bytes). session-archive: ran 06:14 this morning (917 sessions, 3 new, Drive OK). tip-intake: ran 05:08 (queue empty). All upstream sentinels green. Restart-planning: today's sessions have clean infrastructure under them.",
-    action: "No infrastructure action needed today. Focus on T-bill and calendar events.",
-    sessionPrompt: null,
-  },
-  {
-    id: 10, score: 68, category: "Data",
-    headline: "CQR malformed row fix — optimistic-tender-galileo thread still open",
-    detail: "8 days of flags: great-quirky-heisenberg Apr 7 row has conf-range and ff-level swapped. Fix: conf-range=[80-88], ff-level=Low. 2-minute fix in cqr-log.md. Thread: optimistic-tender-galileo.",
-    action: "pickup cqr log row fix → edit cqr-log.md line for 2026-04-07 great-quirky-heisenberg → set conf-range=[80-88], ff-level=Low.",
-    sessionPrompt: "pickup cqr log row fix",
-  },
+  { id: "T01", score: 87, theme: "Automation", title: "Run the manifest script now", body: "apply_manifest_update_20260416.py is sitting in session-backups/ with 14 unregistered sessions. This is the highest-leverage 3-minute task of the morning \u2014 do it before the 9am work wall closes the window.", sessionPrompt: "Run apply_manifest_update_20260416.py in /Users/davenichols/AI/Claude/session-backups/ to register the 14 unregistered sessions. Show me the output and confirm the manifest updated correctly." },
+  { id: "T02", score: 84, theme: "Workflow", title: "2-second path check before edit_file", body: "mcp-behavior errors have appeared 3 times this month \u2014 all edit_file schema confusion. /Users/ paths need mcp__filesystem__edit_file with edits:[{oldText,newText}]. /sessions/ paths use the built-in Edit tool. Burn this in before today\u2019s sessions start.", sessionPrompt: "Explain the edit_file tool schema difference: when to use mcp__filesystem__edit_file vs the built-in Edit tool, and what parameters each expects. Give me a quick reference I can paste into CLAUDE.md." },
+  { id: "T03", score: 82, theme: "Calendar", title: "Work wall 9am\u20134pm \u2014 move now", body: "Today\u2019s calendar is 6 contiguous busy blocks from 9am to 4pm with zero gaps. The only Claude windows are right now (before 9am) and after 4pm. The 9am block has a 30-min prep window \u2014 use it for the manifest script or cowork settings paste.", sessionPrompt: "threads \u2014 what are my 3 most closeable active threads right now? I have about 20 minutes before my work day starts." },
+  { id: "T04", score: 80, theme: "Agents", title: "Design a QA specialist agent for dashboard JSX", body: "The dashboard deploy pipeline runs blind \u2014 no validation before the file hits the daemon. A specialist agent that parses JSX, checks LIVE DATA schema, and flags missing/malformed fields would catch bugs before they reach Netlify. Create it today while the architecture is fresh.", sessionPrompt: "I want to create a QA specialist agent for my morning dashboard JSX output. It should validate the LIVE DATA section schema, check for required fields, flag malformed conflict strings (never boolean), and confirm the file parses. Design the agent prompt and integration point." },
+  { id: "T05", score: 79, theme: "Projects", title: "Group Finance threads into a Project", body: "Three active threads are Finance-related: raisin-freshstart+everbank, treasury-t-bill, and cqr-log-row-fix. A Project wrapper saves 3\u20135 turns per session on context reconstruction. Set it up now while all three are active.", sessionPrompt: "Set up a Finance Project in my handoff system. Group raisin-freshstart+everbank, treasury-t-bill, and cqr-log-row-fix under it. Create the project file with shared context so future sessions don\u2019t need to reconstruct it each time." },
+  { id: "T06", score: 77, theme: "Automation", title: "Write the T-bill proc.md while context is fresh", body: "The treasury-t-bill thread is 3 days old and the process is still undocumented. Last session you executed the purchase manually. Writing the proc.md now while the steps are fresh prevents a 20-minute context reconstruction next quarter.", sessionPrompt: "Write /Users/davenichols/AI/Claude/Finance/t-bill-proc.md. Document the T-bill purchase process: how to check current rates, which account to use, purchase steps, and when to execute. Use the standard proc.md format." },
+  { id: "T07", score: 75, theme: "Obsidian", title: "Update work-context.md with Finance state", body: "ops/work-context.md hasn\u2019t captured the Finance thread cluster or the 90-day consulting sprint milestone. Both are now 3+ days old. This is the maintenance pass that keeps Obsidian useful for session continuity.", sessionPrompt: "Update /Users/davenichols/Obsidian/Claude/ops/work-context.md with: (1) Finance thread cluster (raisin, t-bill, cqr-log), (2) consulting sprint Day 22 status, (3) session-archive backlog issue. Use the vault write protocol." },
+  { id: "T08", score: 73, theme: "Session Skill", title: "Pre-stage session skill v2 parallel-execution design", body: "The session skill roadmap has parallel-execution as the next theme. Pre-staging means the next session that picks this up doesn\u2019t start from zero. Draft the parallel-execution design spec as a 1-page handoff note today.", sessionPrompt: "Draft a 1-page design spec for session skill v2 parallel-execution feature: what it enables, the data structure changes needed, and the execution model. Save as a handoff note I can pick up in the next session." },
+  { id: "T09", score: 72, theme: "Confirmatory", title: "Verify dashboard conflict display fix after 7:40am", body: "The adoring-amazing-johnson conflict display bug fix should be deploying this morning. After 7:40am, check morning.futureishere.net to confirm the \u26a0\ufe0f icons show the conflict text (not blank). This closes the dashboard-conflict-display-bug thread.", sessionPrompt: "Check morning.futureishere.net and confirm the conflict display fix is working. The \u26a0\ufe0f icons should now show conflict description text, not be blank. Screenshot and confirm." },
+  { id: "T10", score: 70, theme: "Workflow", title: "Add labeled events to replace generic Busy blocks", body: "Today\u2019s calendar shows 6 \u2018Work: Busy\u2019 blocks with zero context. Private events degrade the calendar signal for prep nudges and conflict detection. Even a 1-word label (Standup, Review, Focus) gives Claude enough to generate useful prep advice.", sessionPrompt: "I want to improve my calendar signal by adding short labels to my recurring work blocks. Help me set up a naming convention for private calendar events that gives Claude context without exposing sensitive details." },
 ];
-
 const SKILLS_PROGRESS = [
-  { name: "Calendar",      level: "Stable",  trend: "→" },
-  { name: "Handoff",       level: "Stable",  trend: "↑" },
-  { name: "Bible",         level: "Stable",  trend: "→" },
-  { name: "Cartography",   level: "Early",   trend: "→" },
-  { name: "Skill Manager", level: "Stable",  trend: "→" },
-  { name: "Session",       level: "Early",   trend: "→" },
+  { name: "Calendar",      level: "Stable",  trend: "\u2192" },
+  { name: "Handoff",       level: "Stable",  trend: "\u2191" },
+  { name: "Bible",         level: "Stable",  trend: "\u2192" },
+  { name: "Cartography",   level: "Early",   trend: "\u2192" },
+  { name: "Skill Manager", level: "Stable",  trend: "\u2192" },
+  { name: "Session",       level: "Early",   trend: "\u2192" },
 ];
-
-// ─── Thread Pulse ────────────────────────────────────────────────────────────
+const THREAD_COUNT = 19;
+const THREAD_STALE_COUNT = 12;
 const threads = [
-  { title: "treasury t-bill execution", project: "Finance", status: "active", ageLabel: "2d", summary: "$110k Schwab 8-week T-bill, flat curve confirmed — auction TODAY", pickupCmd: "pickup treasury t-bill execution", stale: false },
-  { title: "raisin freshstart + everbank stacking", project: "Finance", status: "active", ageLabel: "1d", summary: "EverBank 4.10% likely stackable (~75%). Docx update pending.", pickupCmd: "pickup raisin freshstart + everbank stacking research", stale: false },
-  { title: "cowork settings paste", project: "Claude", status: "active", ageLabel: "1d", summary: "PREFS_KERNEL_V3 pastes ready. Dave pastes into Cowork Settings.", pickupCmd: "pickup cowork settings paste", stale: false },
-  { title: "deploy pipeline followups", project: "Claude", status: "active", ageLabel: "1d", summary: "5 crucible items: GitHub PAT, vault write, CLAUDE.md extension, NS1 key, monthly health check.", pickupCmd: "pickup deploy pipeline followups", stale: false },
-  { title: "cqr log row fix", project: "Claude", status: "active", ageLabel: "2d", summary: "Malformed great-quirky-heisenberg Apr 7 row. 2-min fix.", pickupCmd: "pickup cqr log row fix", stale: false },
-  { title: "jen config v3.8.0 sync", project: "jen-config", status: "active", ageLabel: "2d", summary: "CLAUDE.md cascade done, manifest v3.8.0. Drive sync pending.", pickupCmd: "pickup jen config v3.8.0 sync", stale: false },
-  { title: "vault write enforcement", project: "Claude", status: "active", ageLabel: "6d", summary: "Option A deployed (handoff v2.0.4). Option B pending.", pickupCmd: "pickup vault write enforcement", stale: false },
-  { title: "chat rename removal", project: "Claude", status: "active", ageLabel: "7d", summary: "Step 9 excised from handoff skill. Deployed v2.0.3.", pickupCmd: "pickup chat rename removal", stale: true },
-  { title: "log health automation", project: "Claude", status: "active", ageLabel: "7d", summary: "session-archive.log and deploy-log.md parsed in Step 3j.", pickupCmd: "pickup log health automation", stale: true },
-  { title: "session archive sentinel verified", project: "Claude", status: "active", ageLabel: "7d", summary: "Sentinel pattern confirmed. task-sentinels/ dir live.", pickupCmd: "pickup session archive sentinel verified", stale: true },
-  { title: "bootstrap phase 1 elimination", project: "Claude", status: "active", ageLabel: "9d", summary: "PREFS_KERNEL_V3 deployed. ToolSearch elimination pending.", pickupCmd: "pickup bootstrap phase 1 elimination", stale: true },
-  { title: "delete stale scheduled task", project: "Claude", status: "active", ageLabel: "9d", summary: "skill-token-optimization-run needs manual removal via Cowork UI.", pickupCmd: "pickup delete stale scheduled task", stale: true },
-  { title: "maquis inc research", project: "Claude", status: "active", ageLabel: "13d", summary: "Deep research on Maquis Inc. (NY, Sept 2025) — global businesses using 'Maquis'.", pickupCmd: "pickup maquis inc research", stale: true },
-  { title: "jen config project scoping", project: "jen-config", status: "active", ageLabel: "12d", summary: "Scoped jen-config as standalone Project — crucible validated.", pickupCmd: "pickup jen config project scoping", stale: true },
-  { title: "dashboard tips overhaul", project: "Claude", status: "active", ageLabel: "10d", summary: "No-op session. All pending items carry forward.", pickupCmd: "pickup dashboard tips overhaul", stale: true },
-  { title: "jen setup day — ready to execute", project: "jen-config", status: "active", ageLabel: "14d", summary: "All blockers cleared. Manifest v2.5.3. Needs Jen's Windows machine.", pickupCmd: "pickup jen setup day", stale: true },
-  { title: "session archive drive fix", project: "Claude", status: "loaded", ageLabel: "13d", summary: "First session-archive run completed locally. Drive upload blocked.", pickupCmd: "pickup session archive drive fix", stale: true },
-  { title: "vault sweep deployed", project: "Claude", status: "loaded", ageLabel: "10d", summary: "Vault sweep step added to handoff skill v2.0.1. AE-015 written.", pickupCmd: "pickup vault sweep deployed", stale: true },
+  { title: "jen setup day",              project: "jen-config", status: "active", ageLabel: "15d", summary: "Setup day planning for Jen\u2019s Windows machine. Needs execution.", pickupCmd: "pickup jen-setup-day", stale: true },
+  { title: "maquis research",            project: "Family",     status: "active", ageLabel: "14d", summary: "Historical research thread. Pending next research session.", pickupCmd: "pickup maquis-research", stale: true },
+  { title: "jen config project scoping", project: "jen-config", status: "active", ageLabel: "13d", summary: "Scoping full Jen config project. Needs prioritization.", pickupCmd: "pickup jen-config-project-scoping", stale: true },
+  { title: "dashboard tips overhaul",    project: "Claude",     status: "active", ageLabel: "11d", summary: "Tips system redesign. Schema + scoring improvements pending.", pickupCmd: "pickup dashboard-tips-overhaul", stale: true },
+  { title: "bootstrap phase 1",          project: "Claude",     status: "active", ageLabel: "10d", summary: "Bootstrap batch optimization phase 1. Implementation pending.", pickupCmd: "pickup bootstrap-phase-1", stale: true },
+  { title: "delete stale task",          project: "Claude",     status: "active", ageLabel: "10d", summary: "Stale scheduled task cleanup. Awaiting execution.", pickupCmd: "pickup delete-stale-task", stale: true },
+  { title: "chat rename removal",        project: "Claude",     status: "active", ageLabel: "8d",  summary: "Remove chat rename behavior from CLAUDE.md. Pending edit.", pickupCmd: "pickup chat-rename-removal", stale: true },
+  { title: "log health automation",      project: "Claude",     status: "active", ageLabel: "8d",  summary: "Automate log health checks. Design spec pending.", pickupCmd: "pickup log-health-automation", stale: true },
+  { title: "session archive sentinel",   project: "Claude",     status: "active", ageLabel: "8d",  summary: "Sentinel task for session archive. Drive upload backlog active.", pickupCmd: "pickup session-archive-sentinel", stale: true },
+  { title: "vault write enforcement",    project: "Claude",     status: "active", ageLabel: "7d",  summary: "Enforce vault write protocol across sessions. Rule pending.", pickupCmd: "pickup vault-write-enforcement", stale: true },
+  { title: "raisin freshstart everbank", project: "Finance",    status: "active", ageLabel: "2d",  summary: "High-yield account transfers. Steps researched, execution pending.", pickupCmd: "pickup raisin-freshstart-everbank", stale: false },
+  { title: "treasury t-bill",            project: "Finance",    status: "active", ageLabel: "3d",  summary: "T-bill purchase executed. Proc.md documentation pending.", pickupCmd: "pickup treasury-t-bill", stale: false },
+  { title: "cqr log row fix",            project: "Finance",    status: "active", ageLabel: "3d",  summary: "CQR log row format fix. Schema correction pending.", pickupCmd: "pickup cqr-log-row-fix", stale: false },
+  { title: "jen config v3.8.0 sync",     project: "jen-config", status: "active", ageLabel: "3d",  summary: "Sync Jen\u2019s config to v3.8.0. Changes staged, apply pending.", pickupCmd: "pickup jen-config-v3.8.0-sync", stale: false },
+  { title: "cowork settings paste",      project: "Claude",     status: "active", ageLabel: "2d",  summary: "12-day drift detected. PASTE files ready. Awaiting manual paste.", pickupCmd: "pickup cowork-settings-paste", stale: false },
+  { title: "deploy pipeline followups",  project: "Claude",     status: "active", ageLabel: "2d",  summary: "Post-deploy audit items. 3 followups scoped.", pickupCmd: "pickup deploy-pipeline-followups", stale: false },
+  { title: "dashboard conflict display", project: "Claude",     status: "active", ageLabel: "1d",  summary: "Bug fix deploying this morning. Verify \u26a0\ufe0f icons after 7:40am.", pickupCmd: "pickup dashboard-conflict-display-bug", stale: false },
+  { title: "session archive drive fix",  project: "Claude",     status: "loaded", ageLabel: "14d", summary: "Drive upload relay fix. Backlog: 14 sessions pending upload.", pickupCmd: "pickup session-archive-drive-fix", stale: true },
+  { title: "vault sweep deployed",       project: "Claude",     status: "loaded", ageLabel: "11d", summary: "Vault sweep deployed. Follow-up verification pending.", pickupCmd: "pickup vault-sweep-deployed", stale: true },
 ];
-const THREAD_COUNT = 16;
-const THREAD_STALE_COUNT = 9;
-
-// ─── Open Decisions ──────────────────────────────────────────────────────────
 const DECISIONS_LABEL = "0 open";
 const openDecisions = [];
-
-// ─── Morning Intent ──────────────────────────────────────────────────────────
 const morningIntent = [
-  { rank: 1, text: "Execute T-bill auction at Schwab — $110k, 8-week, auction closes ~1pm ET. Transfer from Ally if needed.", source: "goal", pickupCmd: "pickup treasury t-bill execution" },
-  { rank: 2, text: "Sign into Zoom by 12:05p — Emma calls from Ukraine at 12:15p on Dave's account. Work Busy conflict 12:30-2p is unavoidable.", source: "calendar", pickupCmd: null },
-  { rank: 3, text: "Paste Cowork settings — PREFS_KERNEL_V3 ready in CLAUDE-md-fix/. Two files, two pastes, thread closes.", source: "threads", pickupCmd: "pickup cowork settings paste" },
+  { rank: 1, text: "Run apply_manifest_update_20260416.py \u2014 clears 14-session Drive backlog before the 9am work wall", source: "systems", pickupCmd: "Run apply_manifest_update_20260416.py in /Users/davenichols/AI/Claude/session-backups/ to register the 14 unregistered sessions. Show me the output." },
+  { rank: 2, text: "Paste cowork settings \u2014 12-day drift detected, closes awesome-nifty-cannon thread", source: "threads", pickupCmd: "pickup cowork-settings-paste" },
+  { rank: 3, text: "Triage 3 oldest stale threads: jen-setup-day (15d), maquis-research (14d), jen-config-project-scoping (13d)", source: "threads", pickupCmd: "threads \u2014 I want to triage my 3 oldest stale threads. Show me jen-setup-day, maquis-research, and jen-config-project-scoping and help me decide: close, defer, or continue each." },
 ];
-
-// ─── Consulting Signals ───────────────────────────────────────────────────────
 const consultSignals = [
-  { headline: "Deloitte 2026 P&U Outlook: 50% AI ROI gap among utilities — only half meeting AI investment targets", why: "Confirms persistent execution gap between AI spending and delivery — exactly your consulting entry point.", source: "Deloitte 2026 Power & Utilities Outlook", talkingPoint: "Deloitte's 2026 P&U data shows 50% of utilities aren't hitting ROI on AI investments — the gap is execution, not budget. That's the workflow problem I help close." },
-  { headline: "Kyndryl: utility AI pilots scaling to production in Q1 2026 — integration complexity is the bottleneck", why: "Pilot-to-production wave creates demand for workflow and integration expertise in your target sector.", source: "Kyndryl AI in Utilities Report, Feb 2026", talkingPoint: "Kyndryl's Feb 2026 data shows utility AI pilots scaling to production this quarter — the bottleneck is integration complexity, not models. That's where structured workflow systems pay off." },
+  { headline: "42% of utilities plan AI deployments by 2027 \u2014 \u2018speed-to-value\u2019 is now top friction, per DTECH 2026", why: "Planning phase utilities under pressure to show ROI early are ideal entry points for AI workflow audits.", source: "Utility Dive", talkingPoint: "DTECH 2026 showed 42% of utilities are planning AI \u2014 but speed-to-value is now the biggest friction point. I help utilities scope and sequence AI workflows to hit early wins before the board asks for ROI proof." },
+  { headline: "Energy AI shifts from pilots to production in 2026 \u2014 AES, Fluence, Southern Nuclear deploying at scale", why: "Pilot-to-production transition means utilities now need workflow infrastructure and governance \u2014 the exact advisory gap where your practice competes.", source: "Google Cloud Blog / Renewable Energy World 2026", talkingPoint: "The pilot phase is over for serious players \u2014 AES and Southern Nuclear are deploying AI at fleet scale in 2026. The gap isn\u2019t \u2018should we use AI\u2019 \u2014 it\u2019s \u2018how do we operationalize it\u2019. That\u2019s the work I do." },
 ];
-const CONSULT_SIGNAL_DATE = "2026-04-15";
-
-// ─── Goal Anchor ───────────────────────────────────────────────────────────────
-const goalAnchor = {
-  label: "AI Consulting Practice",
-  target: "First paying engagement",
-  milestone: "Sprint Day 21 — 90-day sprint",
-  elapsedPct: 22,
-  horizonLabel: "Sep 26, 2026",
-};
-
-// ─── Monday Scorecard ──────────────────────────────────────────────────────────
+const CONSULT_SIGNAL_DATE = "2026-04-16";
+const goalAnchor = { label: "AI Consulting Practice", target: "First paying engagement", milestone: "Day 22 of 90-day sprint", elapsedPct: 23, horizonLabel: "Sep 2026" };
 const mondayScorecard = null;
-
-// ─── Dashboard Meta ───────────────────────────────────────────────────────────
 const dashboardMeta = {
   version: "V009-20260413",
   changelog: [
-    { date: "2026-04-13", type: "added",   item: "Open Decisions block",          note: "Surfaces unresolved choices from handoff [DECISION]-tagged Pending items. Stakes-coded, stale-flagged, expandable with context and copyable pickup cmd." },
-    { date: "2026-04-13", type: "changed", item: "Signals — talking point layer", note: "Each signal now includes a ready-to-paste verbatim talking point for outreach or calls. Copy button per signal." },
-    { date: "2026-04-01", type: "added",   item: "Dashboard Meta block",      note: "Self-documenting: block inventory, changelog, and next-evolution ideas with copy prompts." },
-    { date: "2026-03-28", type: "added",   item: "Morning Intent block",       note: "Top 3 synthesized priorities from threads, calendar, goals, systems. Replaced passive summary." },
-    { date: "2026-03-28", type: "added",   item: "Goal Anchor block",          note: "90-day sprint progress bar driven by goals.json. Gives the daily grind a horizon line." },
-    { date: "2026-03-28", type: "added",   item: "Consulting Signal block",    note: "3 curated industry signals, each connected to practice positioning." },
-    { date: "2026-03-27", type: "changed", item: "Calendar → sidebar",         note: "Shifted from main column to sidebar so tips and threads get more vertical space." },
-    { date: "2026-03-26", type: "added",   item: "Thread Pulse block",         note: "Full thread list with age, project, stale flag, and copyable pickup commands." },
-    { date: "2026-03-25", type: "changed", item: "Tip ID copy",                note: "Each tip gets a copyable ID for the tip-rating feedback loop." },
+    { date: "2026-04-13", type: "added",   item: "Consulting Signals block",   note: "Daily market intelligence for AI energy consulting. Two signals with why/talkingPoint fields." },
+    { date: "2026-04-13", type: "added",   item: "Goal Anchor block",          note: "Sprint progress bar with milestone + horizon label for 90-day consulting sprint." },
+    { date: "2026-04-08", type: "added",   item: "Thread Pulse block",         note: "19 active threads, 12 stale. Sorted oldest-first." },
+    { date: "2026-04-08", type: "changed", item: "Conflict field type",        note: "conflict is now string|null (never boolean). Fixes blank \u26a0\ufe0f icons (adoring-amazing-johnson)." },
+    { date: "2026-04-05", type: "added",   item: "Error Trends table",         note: "Per-category 7d counts, direction arrows, detail + fix fields." },
+    { date: "2026-04-05", type: "changed", item: "Systems block expanded",     note: "Priority action + error trends replace single SYSTEMS_SUMMARY string." },
+    { date: "2026-03-31", type: "added",   item: "Skills Progress block",      note: "Per-skill level + trend tracking." },
     { date: "2026-03-24", type: "added",   item: "Monday Scorecard block",     note: "Weekly CQR analysis by domain, conditionally rendered on Mondays." },
   ],
   nextIdeas: [
@@ -234,8 +128,6 @@ const dashboardMeta = {
   ],
 };
 
-
-// ═══════════════════════════════════════════════════════════════════════════
 // COMPONENT — Do not modify below this line.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -541,7 +433,7 @@ function CalendarSection() {
           {conflicts.map(ev => (
             <div key={ev.id} style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
               <span style={{ color: C.amber, fontFamily: F.mono, fontSize: 12, flexShrink: 0, marginTop: 1 }}>⚠</span>
-              <span style={{ fontFamily: F.body, fontSize: 12, color: C.amber, lineHeight: 1.4 }}>{ev.conflict}</span>
+              <span style={{ fontFamily: F.body, fontSize: 12, color: C.amber, lineHeight: 1.4 }}>{typeof ev.conflict === "string" ? ev.conflict : "Scheduling conflict — check calendar"}</span>
             </div>
           ))}
         </div>
