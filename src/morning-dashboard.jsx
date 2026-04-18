@@ -11,247 +11,247 @@ import { useState } from "react";
 // ═══════════════════════════════════════════════════════════════════════════
 // LIVE DATA — Claude replaces ONLY this section. Component code is frozen.
 // ═══════════════════════════════════════════════════════════════════════════
-const BRIEFING_DATE = "Friday, Apr 17";
-const BRIEFING_TIME = "7:30a";
-const TIP_DATE = "0417.0730"; // MMDD.HHMM — scopes tip IDs to this run
+
+const BRIEFING_DATE = "Saturday, Apr 18";
+const BRIEFING_TIME = "3:35a";
+const TIP_DATE = "0418.0735"; // MMDD.HHMM — scopes tip IDs to a specific run: 0418.0735-01
 const GREETING = "Good morning, Dave.";
 
-// Calendar data — GCal tool stale this run; graceful degradation applied
-const CAL_SUMMARY = "⚠ GCal unavailable";
-const calEvents = [];
+// Calendar data
+const CAL_SUMMARY = "2 events tonight";
+const calEvents = [
+  { id: 1, time: "5:30p", end: "9:00p", dur: "3.5h", title: "Karaoke at Chuck's", color: "#039BE5", prep: "Fun Saturday night — enjoy the break from screens.", allDay: false, conflict: null },
+  { id: 2, time: "10:00p", end: "11:00p", dur: "1h", title: "Shake Vanilla Extract", color: "#33B679", prep: "Give the vanilla extract jar a shake.", allDay: false, conflict: null },
+];
 const IS_MONDAY = false;
 const weekShape = [];
 
 // Systems health data
 const SYSTEMS_STATUS = "amber";
-const SYSTEMS_SUMMARY = "\u26a0 Cowork settings: 12d drift (paste pending). Session-archive: 14-session Drive backlog. 0 new errors 24h \u00b7 5 errors 7d.";
+const SYSTEMS_SUMMARY = "⚠ Session archive backlog growing (14 → ~30 sessions). 0 errors 24h, 5 in 7d, meta/mcp-behavior patterns stable.";
 const ERROR_COUNT_24H = 0;
 const ERROR_COUNT_7D = 5;
 const PRIORITY_ACTION = {
-  title: "Paste Cowork settings",
-  fix: "Copy CLAUDE-md-fix/current-global-kernel.txt \u2192 Cowork Settings \u2192 Global Instructions. Copy current-prefs-kernel.txt \u2192 User Preferences. Thread: awesome-nifty-cannon.",
-  impact: "12-day drift from canon; PREFS_KERNEL_V3 fully active after paste",
+  title: "Session archive manifest update pending",
+  fix: "python3 /Users/davenichols/AI/Claude/scripts/apply_manifest_update_20260418.py",
+  impact: "~30 sessions in Drive backlog; manifest out of sync with latest archival run",
 };
+// errorTrends schema: { label, count7d, direction, detail?, fix? }
 const errorTrends = [
   {
     label: "meta",
     count7d: 2,
     direction: "flat",
-    detail: "Context-parsing miss on continuation pickup (E-kind-tender-goldberg-001: 20+ tool calls lost Apr 14) + registry gap. High-effort pattern.",
-    fix: "On pickup: resolve terse diagnostic messages against handoff Pending FIRST. L-032 wire-in (handoff v2.3.0) addresses Claude\'s side.",
+    detail: "Context-parsing miss on continuation pickup (high effort, Apr 14) + registry gap detection (Apr 15). Pattern: mismatch between session opener tokens and handoff Pending.",
+    fix: "Pickup openers with technical tokens → match against handoff Pending before bootstrap. L-032 rule in place.",
   },
   {
     label: "mcp-behavior",
     count7d: 2,
     direction: "flat",
-    detail: "edit_file schema confusion (edits array vs old_string) + google_drive_fetch param name (document_ids not id). 3rd occurrence of edit_file issue.",
-    fix: "Cache: mcp edit = edits:[{oldText,newText}] array; drive_fetch = document_ids (plural). ToolSearch before any deferred MCP call.",
+    detail: "edit_file schema confusion (3rd instance, Apr 13) + google_drive_fetch param name error (Apr 13). Same class — wrong param names on MCP tools.",
+    fix: "Cache: mcp edit_file = edits:[{oldText,newText}]. Run ToolSearch before first MCP call each session.",
   },
   {
     label: "deploy/build",
     count7d: 1,
     direction: "down",
-    detail: "Netlify project enumeration miss (E-kind-tender-goldberg-002). Content-length:0 = different project, not CDN or bundle.",
-    fix: "AE-022 first-check now in CLAUDE.md. Check project topology first when any *.futureishere.net subdomain misbehaves.",
+    detail: "Netlify project enumeration miss (high effort, Apr 14). AE-022 first-check rule now in CLAUDE.md.",
+    fix: "AE-022 deployed. Check deploy-pipeline.md FIRST-CHECK before any *.futureishere.net work.",
   },
 ];
 
 // Tips data
+// Tip schema: { id, score, headline, detail, category, action, sessionPrompt }
 const TIPS_LABEL = "10 tips scored";
 const tips = [
   {
-    id: 1, score: 88, category: "Dave-actionable-workflow",
-    headline: "Continuation pickup: name the symptom explicitly to prevent context recovery rounds",
-    detail: "When resuming a thread, terse opening messages lose context. E-kind-tender-goldberg-001 cost 20+ tool calls when \'Step 4: content-length 0\' was misread as a bootstrap status instead of a curl result. One habit: prefix the key finding explicitly — \'pickup pensive-jolly-dijkstra — T-bill purchased at 3.69%\' beats \'3.69% confirmed.\' Costs 3 seconds, saves 15 minutes. This is the human side of L-032.",
-    action: "On any continuation pickup: lead with \'pickup [thread-name] — [key fact or status]\'. Don\'t let the diagnostic payload stand alone.",
-    sessionPrompt: "Teach me the continuation pickup habit — how to structure opening messages so Claude has the context it needs without a re-orientation round.",
+    id: 1, score: 89, category: "Workflow",
+    headline: "Handoff skill: install v2.3.2 + echo-confirm fix in one Saturday session",
+    detail: "You have a Saturday window before Karaoke at 5:30p. Handoff v2.3.2 has been undeployed for 13+ days — the echo-confirm fix is one line in the Load Flow. After pickup loads, Claude echoes what it’s picking up, eliminating silent wrong-thread loads.",
+    action: "skill update handoff — then confirm echo-confirm line is in Load Flow",
+    sessionPrompt: "skill update handoff — walk me through installing v2.3.2 and verifying the echo-confirm fix is in the Load Flow.",
   },
   {
-    id: 2, score: 87, category: "Dave-actionable-strategy",
-    headline: "12 stale threads, no triage process — set a Friday thread review habit",
-    detail: "12/19 threads are stale (>7d) including the 3 oldest at 14-16 days: jen-setup-day, maquis-research, jen-config-project-scoping. The handoff skill supports marking threads dead or setting next steps — the missing piece is the weekly habit. A 10-minute Friday review prevents the index from becoming a graveyard of nominally active threads nobody is working.",
-    action: "Today (Friday): say \'threads\' — review the 3 oldest stale threads and mark each dead, defer, or set a concrete next step.",
-    sessionPrompt: "threads — I want to triage my stale threads. Let\'s review the 3 oldest (jen-setup-day, maquis-research, jen-config-project-scoping) and decide: dead, defer, or next step.",
+    id: 2, score: 88, category: "Workflow",
+    headline: "12 stale threads, no kill criteria — 3 archivable today",
+    detail: "Of 19 threads, 12 have been open 7+ days. The 3 oldest (jen-setup-day 17d, maquis-inc 16d, session-archive-drive-fix 16d) have either run their course or been superseded. Each takes under 3 minutes to triage: pickup, check Pending, kill or archive.",
+    action: "pickup [thread] → check Pending → if Pending=None and no open work, mark integrated",
+    sessionPrompt: "I want to triage my 3 oldest threads today. Start with jen-setup-day — load it and tell me if the Pending items are actionable or if the thread should be marked integrated.",
   },
   {
-    id: 3, score: 85, category: "Dave-actionable-strategy",
-    headline: "Agents dispatch: design the routing signal before building the specialists",
-    detail: "The hardest part of orchestrator design is the routing signal — what in a session message reliably triggers \'QA specialist\' vs \'prompt engineer\' vs \'strategy advisor.\' Build the routing spec first, before any one specialist shape dominates your thinking. A 1-paragraph spec prevents 2+ wasted RTTs per dispatch and keeps the orchestrator clean as you add specialists.",
-    action: "Write a 1-paragraph routing spec: what words/patterns trigger each specialist you plan to build. Save to /AI/Claude/agent-ops/routing-spec-draft.md.",
-    sessionPrompt: "Help me design the routing signal for my planned specialist agents — QA engineer, prompt engineer, strategic advisor. What intent patterns trigger each one and how should the dispatcher decide?",
+    id: 3, score: 86, category: "Agents",
+    headline: "Agent dispatches sharpen with a 3-line template: goal + done-definition + constraint",
+    detail: "The strongest agent dispatches share a pattern: one concrete goal, an explicit done-definition (“done when X”), and at least one constraint (“don’t modify Y”). Without all three, agents over-scope or under-deliver. A 2-minute template before dispatch saves context-salvage rounds.",
+    action: "Before next dispatch: GOAL / DONE-WHEN / CONSTRAINTS — 3 lines minimum",
+    sessionPrompt: "Help me build a 3-line agent dispatch template I can reuse. I’ll fill in specifics; you give me the scaffold with examples from my past dispatches.",
   },
   {
-    id: 4, score: 84, category: "Dave-actionable-workflow",
-    headline: "Finance Project context-persistence: pre-load risk posture + T-bill venue permanently",
-    detail: "Your active Finance threads each re-load the same facts: $110k allocation, 8-week T-bill at Schwab, EverBank stacking ~75% confidence, risk posture. A Project-level context doc (2 paragraphs) eliminates this re-loading on every Finance session. Claude Projects custom instructions are always-active within the project — the facts are there before the first message.",
-    action: "Create a Finance Project with a custom instructions doc covering: current allocation, T-bill preference (Schwab 8-week), EverBank stacking status, risk posture.",
-    sessionPrompt: "Help me write a Finance Project context doc — 2 paragraphs covering my current allocation ($110k), T-bill venue (Schwab 8-week), EverBank stacking confidence (~75%), and risk posture. Format as Claude Project custom instructions.",
+    id: 4, score: 83, category: "Projects",
+    headline: "jen-config has 3 active threads but no Project — workflow-separation gap",
+    detail: "sweet-vigilant-euler, relaxed-elegant-maxwell, and wonderful-modest-ramanujan all share jen-config context but run independently. A Cowork Project would isolate context, reduce cross-contamination, and let you pick up any thread without reloading the others. 30-minute scoping session.",
+    action: "Start a session: ‘I want to create a Cowork Project for jen-config to isolate its 3 active threads.’",
+    sessionPrompt: "I want to scope a Cowork Project for jen-config. My 3 active threads are sweet-vigilant-euler, relaxed-elegant-maxwell, and wonderful-modest-ramanujan. Help me define the Project boundary and what goes in it.",
   },
   {
-    id: 5, score: 83, category: "Dave-actionable-workflow",
-    headline: "Agent dispatch for proc.md tasks: always say \u2018MCP tools only — no Python, no bash for core logic\u2019",
-    detail: "E-local_faeb3230 cost 3 agent round trips (~15 min) because the agent prompt said \'run the proc\' without specifying how. The agent defaulted to writing a Python requests script, which can\'t call MCP tools. One sentence prevents this every time: \'Execute using MCP tools only. Do not write Python scripts or use bash for core task logic. Relay calls use mcp__workspace__bash curl only.\'",
-    action: "Add to any agent dispatch for proc.md tasks: \'Execute using MCP tools only. No Python, no bash for core logic. Relay calls use mcp__workspace__bash curl only.\'",
-    sessionPrompt: "I want to dispatch an agent to run a proc.md task. Write me the optimal agent prompt that prevents the Python executor anti-pattern — include the MCP-tools-only constraint.",
+    id: 5, score: 82, category: "Obsidian",
+    headline: "notes/ folder is empty — Saturday session is a natural first entry",
+    detail: "Your Obsidian vault has no entries in notes/. Today’s Saturday session (handoff skill, thread triage, manifest script) is a natural starting point. Pattern: notes/2026-04-18-saturday-session.md, 5 bullets, written at session end. Builds the habit that makes session-continuity faster over time.",
+    action: "At session end: write to /Users/davenichols/Obsidian/Claude/notes/2026-04-18-saturday-session.md",
+    sessionPrompt: "At the end of today’s session, help me write a 5-bullet session note to my Obsidian vault at notes/2026-04-18-saturday-session.md covering what we worked on.",
   },
   {
-    id: 6, score: 80, category: "Dave-actionable-workflow",
-    headline: "Vault sweep checklist is installed — confirm it\'s firing at handoff time",
-    detail: "The 3-question vault sweep checklist (Obsidian ops/vault-sweep-checklist.md, built Apr 6) is wired into handoff skill Step 8 as an advisory. But the last 7 days show no vault-tagged entries in the learning system — either vault writes are happening cleanly or the Step 8 prompt isn\'t surfacing consistently. A quick check: did your last 3 handoffs include a vault write prompt?",
-    action: "Ask: \'Read my last 3 handoff files — did each include a vault write prompt in Step 8? If any are missing it, why?\'",
-    sessionPrompt: "Read my last 3 handoff files and confirm each includes a vault write prompt in Step 8. If any are missing it, explain why and how to restore the behavior.",
+    id: 6, score: 81, category: "Automation",
+    headline: "Auto-close pattern: Pending=None + condition met = integration candidate",
+    detail: "The dashboard conflict display bug thread has Pending=‘None — fix is complete and will take effect on next morning run.’ That run was this morning. Formalizing this: any thread where Pending=None and its stated condition is met = instant integration candidate. Saves 1–2 threads per week.",
+    action: "pickup dashboard conflict display bug → verify fix rendered → mark integrated",
+    sessionPrompt: "pickup dashboard conflict display bug — the fix was deployed this morning. Walk me through verifying it rendered correctly and marking the thread integrated.",
   },
   {
-    id: 7, score: 80, category: "Dave-actionable-workflow",
-    headline: "Knowledge routing: rule \u2192 CLAUDE.md, lesson \u2192 lessons.md, portable fact \u2192 Obsidian vault",
-    detail: "You have 3 active knowledge stores but routing decisions aren\'t always explicit. Decision tree: Is it a rule about how Claude behaves? \u2192 CLAUDE.md. Is it a lesson about how sessions go right or wrong? \u2192 lessons.md (with domain tags). Is it a fact you\'d want across devices/accounts? \u2192 Obsidian vault. The 12-day cowork settings drift might have been caught sooner if ops/ had a recurring-maintenance note for settings validation.",
-    action: "Before ending any session with a learning outcome: explicitly route it — \'this is a CLAUDE.md rule / lessons.md entry / vault fact\' — then write it there in the same turn.",
-    sessionPrompt: "Help me route 3 recent session learnings to the right knowledge destination: CLAUDE.md, lessons.md, or Obsidian vault. Walk me through the routing decision for each.",
+    id: 7, score: 79, category: "Sessions",
+    headline: "jen-config v3.8.0 is one relay step from closing — session skill can restart context",
+    detail: "sweet-vigilant-euler has one remaining item: run relay-manifest-upload.py (1-minute manual step). After that, jen-config v3.8.0 is fully synced and the thread closes. If relay context is lost, ‘session jen’ restarts context cleanly. Saturday afternoon before 5:30p is a good window.",
+    action: "session jen → pickup jen config v3.8.0 sync → run relay-manifest-upload.py",
+    sessionPrompt: "session jen — I want to close sweet-vigilant-euler today. The only remaining item is running relay-manifest-upload.py. Load that thread and help me execute the final step.",
   },
   {
-    id: 8, score: 78, category: "Confirmatory",
-    headline: "Deploy daemon: 17+ consecutive Netlify OKs — \'daemon not found\' is a Linux sandbox artifact",
-    detail: "The morning dashboard bash check reports daemon-not-found because launchctl is Mac-only and the task runs in a Linux sandbox. The real signal is deploy-log.md: 17+ consecutive \'Netlify OK\' entries with no FATAL or FAILED anywhere. Last successful deploy: Apr 16 08:42. The daemon is functioning correctly on the Mac. Trust the log.",
-    action: "No action needed. To verify daemon status, read deploy-log.md — not bash launchctl.",
-    sessionPrompt: "Show me the last 5 entries in morning-dashboard/deploy-log.md and confirm the deploy pipeline is healthy.",
+    id: 8, score: 77, category: "Verification",
+    headline: "CQR malformed row fix (optimistic-tender-galileo) — confirm and close",
+    detail: "The optimistic-tender-galileo thread fixed a malformed cqr-log.md row (swapped Conf-Range/FF columns: ‘low | none’ → ‘[78-88] | Low’). The fix was applied Apr 13. If the row is correct now, the thread can be marked integrated — no other Pending items exist.",
+    action: "pickup cqr log row fix → read cqr-log.md row for great-quirky-heisenberg → verify columns → close",
+    sessionPrompt: "pickup cqr log row fix — I want to verify the malformed row fix was applied correctly and mark this thread integrated if it was.",
   },
   {
-    id: 9, score: 75, category: "Dave-actionable-workflow",
-    headline: "Session skill: New-status, jen-config v3.8.0 nearly stable — what to carry into v2",
-    detail: "Session skill is New-status with minimal real-session usage. The v2 restart was gated on jen-config stabilizing — jen-config is now at manifest v3.8.0 with 1 manual sync step remaining (relay-manifest-upload.py). Pre-v2 context to carry: session types (book, consulting, design, coding, writing) are solid; what needs redesign is stub-loading approach and context-persistence. No urgency — keep this visible as a parallel track.",
-    action: "No action now. Note: jen-config is nearly stable, so session skill v2 restart is the next parallel track. When ready, load adoring-epic-gates + epic-great-shannon before v2 design.",
-    sessionPrompt: "session list — what session types are available? Summarize the session skill\'s current state and what a v2 restart should carry forward vs redesign.",
+    id: 9, score: 75, category: "Workflow",
+    headline: "Open Decisions block is live (V009) but shows 0 items — [DECISION] tags missing",
+    detail: "The OpenDecisionsSection rendered today but shows 0 open decisions. Scanning 3 recent handoffs found no [DECISION]-tagged Pending items. The convention was defined in focused-modest-sagan but hasn’t been applied. Next handoff with a decision point: add [DECISION] before the Pending item and this block starts populating.",
+    action: "In your next handoff write: add [DECISION] before any unresolved choice in Pending",
+    sessionPrompt: "Show me how the [DECISION] tagging convention works in my handoff files. Give me a before/after example with one of my current active threads.",
   },
   {
-    id: 10, score: 72, category: "Confirmatory",
-    headline: "dashboard conflict display bug: Pending is None — mark adoring-amazing-johnson integrated",
-    detail: "adoring-amazing-johnson has Pending: None. The fix was applied Apr 15: proc.md schema now requires conflict to be a string or null (never boolean true), with a defensive fallback in the prototype. Today\'s run is the first morning run after the fix. With GCal unavailable, the calendar section renders no events, so the fix can\'t be visually confirmed today — but the code path is correct. Mark the thread integrated.",
-    action: "Say: \'mark adoring-amazing-johnson integrated\' — the fix is in the prototype and proc.md. Verify visually on next calendar-available morning run.",
-    sessionPrompt: "mark adoring-amazing-johnson integrated",
+    id: 10, score: 70, category: "Health",
+    headline: "Vault backup: 4-day clean Drive sync streak, 27h since last backup",
+    detail: "Vault sync at Apr 17 05:00 UTC (27h ago), Drive status ok. Four consecutive clean syncs. The 48h threshold gives you until tomorrow morning before this becomes advisory. The --no-secrets flag was active. No action needed today.",
+    action: "No action needed. Next sync due within ~21 hours.",
+    sessionPrompt: "Show me the last 5 entries from my vault-sync-log.md and tell me if there are any patterns I should be aware of.",
   },
 ];
 
+// Skills progress — dynamic fields only. Static metadata lives in SKILLS_META in the component section.
+// Schema: { name, level (New/Early/Maturing/Stable), trend (↑/→/↓) }
+// Authoritative list: always exactly these 6 Cowork skill files, always in this order.
 const SKILLS_PROGRESS = [
-  { name: "Calendar",      level: "Maturing", trend: "\u2192" },
-  { name: "Handoff",       level: "Stable",   trend: "\u2192" },
-  { name: "Bible",         level: "Stable",   trend: "\u2192" },
-  { name: "Cartography",   level: "Maturing", trend: "\u2192" },
-  { name: "Skill Manager", level: "Maturing", trend: "\u2192" },
-  { name: "Session",       level: "New",      trend: "\u2192" },
+  { name: "Calendar",      level: "Stable",   trend: "→" },
+  { name: "Handoff",       level: "Maturing", trend: "↑" },
+  { name: "Bible",         level: "Stable",   trend: "→" },
+  { name: "Cartography",   level: "Early",    trend: "→" },
+  { name: "Skill Manager", level: "Maturing", trend: "→" },
+  { name: "Session",       level: "New",      trend: "→" },
 ];
 
-// \u2500\u2500\u2500 Thread Pulse \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─── Thread Pulse ────────────────────────────────────────────
+// All active + loaded threads from handoff-index.md. Always renders — even 1 thread is signal.
+// Schema: { title, project, status ("active"|"loaded"), ageLabel, summary, pickupCmd, stale }
+// stale: true when thread is > 7 days old. Ordered oldest-first.
 const threads = [
-  { title: "dashboard conflict display bug", project: "Claude", status: "active", ageLabel: "2d", summary: "Fixed blank \u26a0\ufe0f icons — conflict field was boolean true instead of string. proc.md + prototype defensive fallback fixed.", pickupCmd: "pickup dashboard conflict display bug", stale: false },
-  { title: "cowork settings paste", project: "Claude", status: "active", ageLabel: "3d", summary: "GI rearchitecture done, V3 kernel check live. One action: Dave pastes Global Instructions + User Preferences into Cowork Settings.", pickupCmd: "pickup cowork settings paste", stale: false },
-  { title: "deploy pipeline followups", project: "Claude", status: "active", ageLabel: "3d", summary: "5 remaining: GitHub PAT tracking, vault write, CLAUDE.md rule extension, NS1 key, monthly health check. Non-blocking.", pickupCmd: "pickup deploy pipeline followups", stale: false },
-  { title: "raisin freshstart + everbank stacking research", project: "Finance", status: "active", ageLabel: "3d", summary: "FRESHSTART + EverBank 4.10% likely stackable (~75% conf). EverBank featured on FRESHSTART landing page.", pickupCmd: "pickup raisin freshstart + everbank stacking research", stale: false },
-  { title: "cqr log row fix", project: "Claude", status: "active", ageLabel: "4d", summary: "Fixed malformed great-quirky-heisenberg row in cqr-log.md — Conf-Range and FF columns corrected.", pickupCmd: "pickup cqr log row fix", stale: false },
-  { title: "jen config v3.8.0 sync", project: "jen-config", status: "active", ageLabel: "4d", summary: "CLAUDE.md cascade complete (4 rules), manifest v3.8.0. Drive manifest sync pending (1-min manual: relay-manifest-upload.py).", pickupCmd: "pickup jen config v3.8.0 sync", stale: false },
-  { title: "treasury t-bill execution", project: "Finance", status: "active", ageLabel: "4d", summary: "8-week T-bills at Schwab (flat curve confirmed). $110k ready. Apr 15 auction status unknown.", pickupCmd: "pickup treasury t-bill execution", stale: false },
-  { title: "vault write enforcement", project: "Claude", status: "active", ageLabel: "8d", summary: "Option A built (handoff skill v2.0.4, advisory vault verification). Option B (scheduled enrichment task) still pending.", pickupCmd: "pickup vault write enforcement", stale: true },
-  { title: "chat rename removal", project: "Claude", status: "active", ageLabel: "9d", summary: "Step 9 (queue session rename) excised from handoff skill, deployed v2.0.3. Daemon idle — optional cleanup only.", pickupCmd: "pickup chat rename removal", stale: true },
-  { title: "log health automation", project: "Claude", status: "active", ageLabel: "9d", summary: "Automated daily log health checks in morning-dashboard — session-archive.log + deploy-log.md parsed in Step 3j.", pickupCmd: "pickup log health automation", stale: true },
-  { title: "session archive sentinel verified", project: "Claude", status: "active", ageLabel: "9d", summary: "Confirmed sentinel step in proc; task-sentinels/ dir live. Sentinel file absent until next 2:01 AM run.", pickupCmd: "pickup session archive sentinel verified", stale: true },
-  { title: "bootstrap phase 1 elimination", project: "Claude", status: "active", ageLabel: "11d", summary: "PREFS_KERNEL_V3 deployed. Open item: can ToolSearch be eliminated by always-available filesystem MCP?", pickupCmd: "pickup bootstrap phase 1 elimination", stale: true },
-  { title: "delete stale scheduled task", project: "Claude", status: "active", ageLabel: "11d", summary: "skill-token-optimization-run confirmed disabled. No API delete — needs manual removal via Cowork UI.", pickupCmd: "pickup delete stale scheduled task", stale: true },
-  { title: "dashboard tips overhaul", project: "Claude", status: "active", ageLabel: "12d", summary: "No-op session — loaded quirky-magical-meitner, confirmed state, no changes. All pending carry forward.", pickupCmd: "pickup dashboard tips overhaul", stale: true },
-  { title: "maquis inc research", project: "Claude", status: "active", ageLabel: "15d", summary: "Deep research on Maquis Inc. (NY, Sept 2025) and all businesses using Maquis globally, tech/AI emphasis.", pickupCmd: "pickup maquis inc research", stale: true },
-  { title: "jen config project scoping", project: "jen-config", status: "active", ageLabel: "14d", summary: "Scoped jen-config as standalone Project — crucible validated, 3 index hygiene items executed.", pickupCmd: "pickup jen config project scoping", stale: true },
-  { title: "jen setup day \u2014 ready to execute", project: "jen-config", status: "active", ageLabel: "16d", summary: "All blockers cleared. Manifest v2.5.3, V4.2.0 canonical. Pick up on Jen\'s Windows machine.", pickupCmd: "pickup jen setup day \u2014 ready to execute", stale: true },
-  { title: "session archive drive fix", project: "Claude", status: "loaded", ageLabel: "15d", summary: "First session-archive run local (19/264 sessions). Drive upload blocked — relay expects docId, not Drive folder ops.", pickupCmd: "pickup session archive drive fix", stale: true },
-  { title: "vault sweep deployed", project: "Claude", status: "loaded", ageLabel: "12d", summary: "Vault integration complete — vault sweep step in handoff v2.0.1. AE-015 (Chrome JS CORS bypass) written.", pickupCmd: "pickup vault sweep deployed", stale: true },
+  { title: "jen setup day — ready to execute", project: "jen-config", status: "active", ageLabel: "17d", summary: "All blockers cleared. Manifest v2.5.3, V4.2.0 canonical. Needs Jen’s Windows machine.", pickupCmd: "pickup jen setup day", stale: true },
+  { title: "maquis inc research", project: "Claude", status: "active", ageLabel: "16d", summary: "Deep research on Maquis Inc. (NY, Sept 2025) and all businesses using ‘Maquis’ globally, tech/AI emphasis.", pickupCmd: "pickup maquis inc research", stale: true },
+  { title: "jen config project scoping", project: "jen-config", status: "active", ageLabel: "13d", summary: "Scoped jen-config as standalone Project — crucible validated, 3 index hygiene items executed.", pickupCmd: "pickup jen config project scoping", stale: true },
+  { title: "dashboard tips overhaul", project: "Claude", status: "active", ageLabel: "13d", summary: "No-op session — confirmed state, all pending items carry forward.", pickupCmd: "pickup dashboard tips overhaul", stale: true },
+  { title: "bootstrap phase 1 elimination", project: "Claude", status: "active", ageLabel: "12d", summary: "PREFS_KERNEL_V3 deployed. Open: investigate eliminating ToolSearch round-trip.", pickupCmd: "pickup bootstrap phase 1 elimination", stale: true },
+  { title: "delete stale scheduled task", project: "Claude", status: "active", ageLabel: "12d", summary: "skill-token-optimization-run confirmed disabled. No API delete — needs manual Cowork UI removal.", pickupCmd: "pickup delete stale scheduled task", stale: true },
+  { title: "log health automation", project: "Claude", status: "active", ageLabel: "10d", summary: "Daily log health checks live in morning-dashboard Step 3j. session-archive.log + deploy-log.md parsed.", pickupCmd: "pickup log health automation", stale: true },
+  { title: "session archive sentinel verified", project: "Claude", status: "active", ageLabel: "10d", summary: "Sentinel pattern confirmed in session-archive proc. task-sentinels/ dir live.", pickupCmd: "pickup session archive sentinel verified", stale: true },
+  { title: "chat rename removal", project: "Claude", status: "active", ageLabel: "10d", summary: "Step 9 excised from handoff skill v2.0.3. Daemon idle — optional cleanup.", pickupCmd: "pickup chat rename removal", stale: true },
+  { title: "vault write enforcement", project: "Claude", status: "active", ageLabel: "9d", summary: "Option A deployed — handoff skill v2.0.4 with advisory vault write verification. Option B pending.", pickupCmd: "pickup vault write enforcement", stale: true },
+  { title: "cqr log row fix", project: "Claude", status: "active", ageLabel: "5d", summary: "Fixed malformed great-quirky-heisenberg row — Conf-Range/FF columns swapped. Verify and close.", pickupCmd: "pickup cqr log row fix", stale: false },
+  { title: "jen config v3.8.0 sync", project: "jen-config", status: "active", ageLabel: "5d", summary: "CLAUDE.md cascade complete. One step left: run relay-manifest-upload.py (1 min).", pickupCmd: "pickup jen config v3.8.0 sync", stale: false },
+  { title: "treasury t-bill execution", project: "Finance", status: "active", ageLabel: "5d", summary: "8-week T-bills at Schwab, flat curve confirmed. $110k at April 15 auction — confirm executed.", pickupCmd: "pickup treasury t-bill execution", stale: false },
+  { title: "cowork settings paste", project: "Claude", status: "active", ageLabel: "4d", summary: "GI rearchitecture done, CLAUDE.md V3 check live. Remaining: Dave pastes Global Instructions + User Prefs into Cowork Settings.", pickupCmd: "pickup cowork settings paste", stale: false },
+  { title: "deploy pipeline followups", project: "Claude", status: "active", ageLabel: "4d", summary: "5 crucible items remain: GitHub PAT tracking, vault write, CLAUDE.md rule extension, NS1 key, monthly health check.", pickupCmd: "pickup deploy pipeline followups", stale: false },
+  { title: "raisin freshstart + everbank stacking", project: "Finance", status: "active", ageLabel: "4d", summary: "FRESHSTART + EverBank 4.10% likely stackable (~75% conf). Docx update pending.", pickupCmd: "pickup raisin freshstart everbank", stale: false },
+  { title: "dashboard conflict display bug", project: "Claude", status: "active", ageLabel: "3d", summary: "Fix deployed this run — blank ⚠️ icons resolved via conflict field schema fix + defensive fallback.", pickupCmd: "pickup dashboard conflict display bug", stale: false },
+  { title: "session archive drive fix", project: "Claude", status: "loaded", ageLabel: "16d", summary: "First session-archive run locally archived. Drive upload blocked — relay expects docId.", pickupCmd: "pickup session archive drive fix", stale: true },
+  { title: "vault sweep deployed", project: "Claude", status: "loaded", ageLabel: "13d", summary: "Vault sweep step added to handoff skill v2.0.1 Write Flow and deployed to Drive.", pickupCmd: "pickup vault sweep deployed", stale: true },
 ];
 const THREAD_COUNT = 19;
 const THREAD_STALE_COUNT = 12;
 
-// \u2500\u2500\u2500 Open Decisions \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─── Open Decisions ──────────────────────────────────────────
+// Populated by proc.md: scans active handoff [DECISION]-tagged Pending items.
+// Schema: { id, question, context, options, thread, threadCmd, staleDays, stakes }
 const DECISIONS_LABEL = "0 open";
 const openDecisions = [];
 
-// \u2500\u2500\u2500 Morning Intent \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─── Morning Intent ────────────────────────────────────────────
+// 3 actionable priorities synthesized from threads + calendar + systems at task run time.
+// Schema: { rank, text, source ("threads"|"calendar"|"systems"|"goal"), pickupCmd }
 const morningIntent = [
-  { rank: 1, text: "Paste Cowork settings NOW — 12-day drift confirmed. CLAUDE-md-fix/current-global-kernel.txt \u2192 Global Instructions, current-prefs-kernel.txt \u2192 User Preferences. 2 minutes, PREFS_KERNEL_V3 fully active.", source: "systems", pickupCmd: "pickup cowork settings paste" },
-  { rank: 2, text: "Treasury T-bill status check + session-archive backlog — confirm 8-week T-bill at Schwab (Apr 15 auction), then run apply_manifest_update_20260416.py to drain 14-session Drive backlog.", source: "threads", pickupCmd: "pickup treasury t-bill execution" },
-  { rank: 3, text: "Friday thread triage — 12 stale threads, 3 at 14-16 days (jen-setup-day, maquis-research, jen-config-project-scoping). 10 minutes to mark dead or set a next step for each.", source: "threads", pickupCmd: "threads" },
+  { rank: 1, text: "Run session archive manifest update — apply_manifest_update_20260418.py in Terminal clears ~30-session Drive backlog.", source: "systems", pickupCmd: "python3 /Users/davenichols/AI/Claude/scripts/apply_manifest_update_20260418.py" },
+  { rank: 2, text: "Mark dashboard conflict display bug (adoring-amazing-johnson) integrated — Pending is ‘None, fix is complete.’ This morning’s run deployed the fix.", source: "threads", pickupCmd: "pickup dashboard conflict display bug" },
+  { rank: 3, text: "Install handoff v2.3.2 and add echo-confirm fix — two debts on the most-used skill, clear Saturday window before Karaoke at 5:30p.", source: "threads", pickupCmd: "skill update handoff" },
 ];
 
-// \u2500\u2500\u2500 Consulting Signals \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-const consultSignals = [
-  {
-    headline: "61% of utilities cite AI talent gap as top deployment barrier — 42% plan AI by 2027 (DTECH 2026)",
-    why: "Talent scarcity is the specific opening for an external AI workflow advisor. The market has intent and budget but not execution capacity — the exact gap your practice addresses.",
-    source: "Utility Dive / DTECH 2026",
-    talkingPoint: "DTECH data shows 61% of utilities are blocked on AI not by budget but by talent — they have the interest but not the workflow infrastructure to move fast. That gap is exactly what I help close.",
-  },
-  {
-    headline: "Utilities shifting AI from pilots to production in field operations — predictive maintenance, load forecasting, grid ops (Renewable Energy World 2026)",
-    why: "Production deployments require process re-engineering, not just tool selection — a $20-35K advisory engagement scope distinct from vendor sales and distinct from pilot-phase consulting.",
-    source: "Renewable Energy World, 2026",
-    talkingPoint: "Utilities are moving AI from lab to field this year — the challenge has shifted from model selection to process redesign, which is where advisory engagements start.",
-  },
-  {
-    headline: "Workflow redesign is the #1 factor linked to measurable AI ROI across 51 enterprise deployments (Stanford Digital Economy Lab / Deloitte 2026)",
-    why: "Research-backed anchor for consulting conversations: ROI doesn\'t come from the model, it comes from embedding AI in workflows — exactly what your practice delivers.",
-    source: "Stanford Digital Economy Lab / Deloitte State of AI 2026",
-    talkingPoint: "The Stanford enterprise AI playbook across 51 deployments finds workflow redesign — not model selection — is the single biggest predictor of AI ROI. I\'d love to explore where your team is in that redesign process.",
-  },
-];
-const CONSULT_SIGNAL_DATE = "2026-04-17";
+// ─── Consulting Signals ──────────────────────────────────────────
+// 2–3 items from targeted web search at task run time. Empty array = web search unavailable.
+// Schema: { headline, why, source, talkingPoint }
+const consultSignals = [];
+const CONSULT_SIGNAL_DATE = "2026-04-18";
 
-// \u2500\u2500\u2500 Goal Anchor \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─── Goal Anchor ─────────────────────────────────────────────────
+// Populated from /morning-dashboard/goals.json at task run time. Motivational context.
+// Schema: { label, target, milestone, elapsedPct (0-100), horizonLabel }
 const goalAnchor = {
   label: "AI Consulting Practice",
   target: "First paying engagement",
-  milestone: "90-day sprint: tooling \u2192 outreach \u2192 first client",
-  elapsedPct: 12,
+  milestone: "90-day sprint: tooling → outreach → first client",
+  elapsedPct: 13,
   horizonLabel: "Sep 2026",
 };
 
-// \u2500\u2500\u2500 Monday Scorecard \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─── Monday Scorecard ─────────────────────────────────────────────
+// null on non-Mondays. Populated from cqr-log.md on Mondays only.
 const mondayScorecard = null;
 
-// \u2500\u2500\u2500 Dashboard Meta \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// ─── Dashboard Meta ─────────────────────────────────────────────
+// Read from /morning-dashboard/dashboard-meta.json at task run time.
+// changelog entry: { date (YYYY-MM-DD), type ("added"|"changed"|"removed"|"fixed"), item, note }
+// nextIdeas entry: { idea, desc, sessionPrompt }
 const dashboardMeta = {
   version: "V009-20260413",
   changelog: [
-    { date: "2026-04-13", type: "added",   item: "Open Decisions block",          note: "Surfaces unresolved choices from handoff [DECISION]-tagged Pending items. Stakes-coded (high/med/low), stale-flagged at 4d, expandable with context and copyable pickup command." },
-    { date: "2026-04-05", type: "changed", item: "Tip rule config-driven",         note: "consulting_tip_max_per_run, consulting_tip_score_cap, dave_human_efficiency_min_per_run added to config.json and wired as CONFIG reads in proc.md." },
-    { date: "2026-04-05", type: "changed", item: "Tip rating persistence",          note: "Send now marks tips with indigo \u2713 badge showing your score. Persists via localStorage keyed to TIP_DATE." },
-    { date: "2026-04-05", type: "changed", item: "Tip generation rules",            note: "Consulting practice tips deprioritized (max 1/run, score \u226475). Dave-human-efficiency tips added as mandatory (min 2/run, ceiling 92)." },
-    { date: "2026-04-01", type: "added",   item: "Dashboard Meta block",            note: "Self-documenting: block inventory, changelog, and next-evolution ideas with copy prompts." },
-    { date: "2026-03-28", type: "added",   item: "Morning Intent block",            note: "Synthesizes top 3 actionable priorities from all data sources. Replaced passive summary." },
-    { date: "2026-03-28", type: "added",   item: "Goal Anchor block",              note: "90-day sprint progress bar driven by goals.json. Gives the daily grind a horizon line." },
-    { date: "2026-03-28", type: "added",   item: "Consulting Signal block",        note: "3 curated industry signals from targeted web searches, each connected to practice positioning." },
-    { date: "2026-03-27", type: "changed", item: "Calendar \u2192 sidebar",              note: "Shifted from main column to right sidebar so tips and threads get more vertical space." },
-    { date: "2026-03-26", type: "added",   item: "Thread Pulse block",             note: "Full thread list with age, project, stale flag, and copyable pickup commands." },
-    { date: "2026-03-25", type: "changed", item: "Tip ID copy added",              note: "Each tip gets a copyable ID for the tip-rating feedback loop." },
-    { date: "2026-03-24", type: "added",   item: "Monday Scorecard block",        note: "Weekly CQR analysis by domain, conditionally rendered on Mondays." },
+    { date: "2026-04-13", type: "added",   item: "Open Decisions block",       note: "Surfaces unresolved choices from handoff [DECISION]-tagged Pending items. Stakes-coded (high/med/low), stale-flagged at 4d, expandable with context and copyable pickup command." },
+    { date: "2026-04-05", type: "changed", item: "Tip rule config-driven",      note: "consulting_tip_max_per_run, consulting_tip_score_cap, dave_human_efficiency_min_per_run added to config.json and wired as CONFIG reads in proc.md." },
+    { date: "2026-04-05", type: "changed", item: "Tip rating persistence",      note: "Send now marks tips with indigo checkmark badge. Persists via localStorage keyed to TIP_DATE — survives reload, auto-clears on next run." },
+    { date: "2026-04-05", type: "changed", item: "Tip generation rules",        note: "Consulting tips deprioritized (max 1/run, score ≤75). Dave-human-efficiency tips added as mandatory (min 2/run, ceiling 92)." },
+    { date: "2026-04-01", type: "added",   item: "Dashboard Meta block",        note: "Self-documenting: block inventory, changelog, and next-evolution ideas with copy prompts. Freedom-to-evolve authorized." },
+    { date: "2026-03-28", type: "added",   item: "Morning Intent block",        note: "Top 3 synthesized priorities from threads, calendar, goals, systems. Replaced passive summary." },
+    { date: "2026-03-28", type: "added",   item: "Goal Anchor block",           note: "90-day sprint progress bar driven by goals.json. Gives the daily grind a horizon line." },
+    { date: "2026-03-28", type: "added",   item: "Consulting Signal block",     note: "Curated industry signals from targeted web search, each connected to practice positioning." },
+    { date: "2026-03-27", type: "changed", item: "Calendar → sidebar",          note: "Shifted from main column to right sidebar so tips and threads get more vertical space." },
+    { date: "2026-03-26", type: "added",   item: "Thread Pulse block",          note: "Full thread list with age, project, stale flag, and copyable pickup commands." },
+    { date: "2026-03-25", type: "changed", item: "Tip ID copy added",           note: "Each tip gets a copyable ID for the tip-rating feedback loop." },
+    { date: "2026-03-24", type: "added",   item: "Monday Scorecard block",      note: "Weekly CQR analysis by domain, conditionally rendered on Mondays." },
   ],
   nextIdeas: [
     {
       idea: "3-day momentum block",
-      desc: "Yesterday\'s key action, today\'s primary move, what tomorrow unlocks. Makes sprint progress feel real even on slow days.",
-      addedDate: "2026-04-01",
-      dataSourcesNeeded: [],
-      sessionPrompt: "I want to add a \'3-day momentum\' block to my morning dashboard. It should show: yesterday\'s key action, today\'s primary move, and what tomorrow unlocks. Draft the data schema and a React component that matches the dashboard\'s visual style.",
+      desc: "Yesterday’s key action, today’s primary move, what tomorrow unlocks. Makes sprint progress feel real even on slow days.",
+      sessionPrompt: "I want to add a '3-day momentum' block to my morning dashboard. It should show: yesterday's key action, today's primary move, and what tomorrow unlocks. Draft the data schema and a React component that matches the dashboard's visual style.",
     },
     {
       idea: "Weekly rhythm view",
-      desc: "Which day is deep work, outreach, Nika, rest. Puts each daily card in context of the week\'s intended shape.",
-      addedDate: "2026-04-01",
-      dataSourcesNeeded: ["rhythm-config-file"],
-      sessionPrompt: "I want to add a weekly rhythm block to my morning dashboard showing my intended day-type for each day of the week (deep work / outreach / family / rest). Draft the data structure and a React component that matches the dashboard\'s visual style.",
+      desc: "Which day is deep work, outreach, Nika, rest. Puts each daily card in context of the week’s intended shape.",
+      sessionPrompt: "I want to add a weekly rhythm block to my morning dashboard showing my intended day-type for each day of the week (deep work / outreach / family / rest). Draft the data structure and a React component that matches the dashboard's visual style.",
     },
     {
       idea: "Signal talking-point layer",
-      desc: "Each signal already has a \'why it matters\' note. Add a one-sentence talking point ready to paste in outreach or a discovery call.",
-      addedDate: "2026-04-01",
-      dataSourcesNeeded: [],
+      desc: "Each signal already has a ‘why it matters’ note. Add a one-sentence talking point ready to paste in outreach or a discovery call.",
       sessionPrompt: "Enhance the Consulting Signal section of my morning dashboard: each signal should include a ready-to-paste talking point I can use verbatim in outreach or a call. Update the ConsultingSignalSection component and dashboardMeta changelog to reflect this change.",
     },
   ],
 };
+
 // ═══════════════════════════════════════════════════════════════════════════
 // COMPONENT — Do not modify below this line.
 // ═══════════════════════════════════════════════════════════════════════════
