@@ -12,159 +12,168 @@ import { useState } from "react";
 // LIVE DATA — Claude replaces ONLY this section. Component code is frozen.
 // ═══════════════════════════════════════════════════════════════════════════
 
-const BRIEFING_DATE = "Monday, Apr 20";
-const BRIEFING_TIME = "7:31a";
-const TIP_DATE = "0420.0731";
-const GREETING = "Good morning, Dave. Happy Monday.";
+const BRIEFING_DATE = "Tuesday, Apr 21";
+const BRIEFING_TIME = "7:30a";
+const TIP_DATE = "0421.0730"; // MMDD.HHMM — scopes tip IDs to a specific run: 0421.0730-01
+const GREETING = "Good morning, Dave.";
 
 // Calendar data
-const CAL_SUMMARY = "⚠ GCal unavailable — clear week";
-const calEvents = [];
-const IS_MONDAY = true;
+const CAL_SUMMARY = "6 events · 1 conflict";
+const calEvents = [
+  { id: 1, time: "10:00a", end: "10:30a", dur: "30m", title: "Work: Busy", color: "#039BE5", prep: null, allDay: false, conflict: null },
+  { id: 2, time: "11:00a", end: "12:00p", dur: "1h", title: "Work: Busy", color: "#039BE5", prep: "Back-to-back with 10am block — zero buffer between.", allDay: false, conflict: null },
+  { id: 3, time: "12:00p", end: "2:00p", dur: "2h", title: "Lena", color: "#33B679", prep: "Starts immediately at 12pm — back-to-back with 11am Work block.", allDay: false, conflict: null },
+  { id: 4, time: "3:00p", end: "3:50p", dur: "50m", title: "Work: Busy", color: "#039BE5", prep: null, allDay: false, conflict: "Overlaps with 'Work: Busy' 3:00–4:00p" },
+  { id: 5, time: "3:00p", end: "4:00p", dur: "1h", title: "Work: Busy", color: "#039BE5", prep: null, allDay: false, conflict: "Overlaps with 'Work: Busy' 3:00–3:50p" },
+  { id: 6, time: "4:30p", end: "5:00p", dur: "30m", title: "Work: Busy", color: "#039BE5", prep: null, allDay: false, conflict: null },
+];
+const IS_MONDAY = false;
 const weekShape = [];
 
 // Systems health data
 const SYSTEMS_STATUS = "amber";
-const SYSTEMS_SUMMARY = "0 errors 24h · 6 errors 7d — meta systemic ×3 (flat), mcp-behavior ×2 (flat), deploy/build ×1 (flat). Learning module dropped 30pts (90→60) — L-036 gap: finance exclusion not wired into generation code. Cowork settings 15d drift (escalated).";
+const SYSTEMS_SUMMARY = "⚠ Cowork settings: CLAUDE.md drifted 12d from PASTE files (16d snapshot). ⚠ Log: session-archive backlog 37→841. meta systemic ×3, stable trend.";
 const ERROR_COUNT_24H = 0;
-const ERROR_COUNT_7D = 6;
+const ERROR_COUNT_7D = 4;
 const PRIORITY_ACTION = {
-  title: "L-036 + Cowork settings (both blocking quality)",
-  fix: "1) Wire finance/consulting/tutoring exclusions into tip generation code (prevents learning module score drop). 2) Paste 2 files from CLAUDE-md-fix/ into Cowork Settings — 2 min, 15d overdue.",
-  impact: "Fixes root cause of 30-point learning audit drop + closes 15d settings drift",
+  title: "Session-archive backlog: 37→841",
+  fix: "5 apply_manifest_update scripts (Apr 15–20) pending on Mac — run each, then trigger Drive relay upload to clear ~841 null drive_file_ids",
+  impact: "~841 sessions missing Drive backup; backlog growing each morning run",
 };
+// errorTrends schema: { label, count7d, direction, detail?, fix? }
 const errorTrends = [
   {
     label: "meta",
     count7d: 3,
     direction: "flat",
-    detail: "Context-parsing miss on continuation pickup (high effort, Apr 14) + registry gap (low, Apr 15) + Block CE JSX hard-stop (low, Apr 18). Systemic pattern across 7d.",
-    fix: "Echo-confirm pickup habit (L-032 wired in handoff v2.3.0). Verify it fires in next pickup session.",
-  },
-  {
-    label: "mcp-behavior",
-    count7d: 2,
-    direction: "flat",
-    detail: "edit_file schema confusion (edits array vs old_string) + google_drive_fetch missing document_ids param. Both Apr 13, both low effort. Third occurrence of edit_file mismatch.",
-    fix: "Hot-cache in CLAUDE.md ops: mcp edit = edits:[{oldText,newText}] array; built-in Edit = old_string/new_string. google_drive_fetch requires document_ids (plural array).",
+    detail: "context-parsing miss on pickup (HIGH effort, Apr 14) + registry gap for scheduled task (LOW, Apr 15) + Block CE hard-stop on 77KB JSX pre-flight (LOW, Apr 18). Procedural gaps and automated task edge cases.",
+    fix: "Load handoff Pending section before interpreting opening messages; add registry entry when creating new MCP tasks; route large JSX validation to agent dispatch.",
   },
   {
     label: "deploy/build",
     count7d: 1,
     direction: "flat",
-    detail: "Netlify project enumeration miss (high effort, Apr 14) — aliased peppers to dead personalguides project. AE-022 now deployed as FIRST-CHECK rule.",
-    fix: "AE-022 first-check in CLAUDE.md: enumerate Netlify projects before any build investigation. Rule deployed — verify it fires correctly.",
+    detail: "Netlify project topology miss (HIGH effort, Apr 14): assumed one Netlify project, diagnosed React/bundle before checking project list. AE-022 deployed as prevention rule.",
+    fix: "AE-022 first-check: enumerate Netlify projects before diagnosing any build/bundle/CDN issues on a subdomain.",
   },
 ];
 
 // Tips data
+// Tip schema: { id, score, headline, detail, category, action, sessionPrompt }
 const TIPS_LABEL = "10 tips scored";
 const tips = [
   {
-    id: 1, score: 91, category: "Learning",
-    headline: "L-036 wire-in: tip exclusion code is missing the finance filter",
-    detail: "The weekly learning audit dropped from 90 to 60 this week. Root cause: L-036 (finance tip exclusion) exists as a lesson but isn't wired into the generation code. The system knows the rule but doesn't enforce it — same class of gap as L-034 before it. Fix the source, not the symptoms: update tip generation to filter finance/consulting/tutoring before scoring.",
-    action: "Wire L-034/L-036 exclusion list into tip generation code this week. Then verify by checking next learning audit score.",
-    sessionPrompt: "Help me wire the active tip exclusions (finance tips, consulting outreach, tutoring students Kate/Emma/Lena/Nika) directly into the morning-dashboard tip generation code. Pull up the relevant proc.md step and implement the filter.",
+    id: 1, score: 89, category: "Dave-actionable-workflow",
+    headline: "Session-archive backlog jumped 37→841 overnight — 5 pending scripts",
+    detail: "The Apr 21 session-archive run archived 29 sessions locally but Drive relay deferred (bash sandbox can't reach Mac filesystem for curl). 5 apply_manifest_update scripts from Apr 15–20 are pending on Mac, covering ~45 unregistered sessions. Backlog will keep growing each morning run until these are executed.",
+    action: "Run apply_manifest_update_20260415.py through apply_manifest_update_20260420.py in Mac Terminal (5 scripts, ~5 min total), then verify Drive relay on next session-archive run",
+    sessionPrompt: "I need to run 5 pending apply_manifest_update scripts in /Users/davenichols/AI/Claude/ on my Mac. Walk me through running them in sequence and then triggering a Drive relay upload to clear the backlog.",
   },
   {
-    id: 2, score: 89, category: "Projects",
-    headline: "Cowork settings: 15 days overdue — paste is 2 minutes",
-    detail: "The awesome-nifty-cannon thread has been open 6 days with paste files ready. The Cowork Settings Sync rule fires every session as an advisory. At 15 days, this is no longer a background item — it's a slow drain on session starts. The fix is 2 minutes: open CLAUDE-md-fix/, paste Global Instructions and User Preferences into Cowork Settings.",
-    action: "Open CLAUDE-md-fix/. Paste PASTE-cowork-global-claude-md.txt and PASTE-user-preferences.txt into Cowork Settings → Global Instructions and User Preferences respectively.",
-    sessionPrompt: "pickup cowork settings paste",
+    id: 2, score: 88, category: "Dave-actionable-workflow",
+    headline: "Garden app is live but GitHub auto-deploy is NOT connected",
+    detail: "garden.futureishere.net launched but the Netlify site is not linked to the GitHub repo (per the cool-wizardly-cori handoff). Every code change requires a manual Netlify deploy — no push-to-deploy. This will become friction immediately as Layer 2 build continues.",
+    action: "In Netlify UI: link the garden-app repo to the Netlify site (Site Settings → Build & Deploy → Link repository)",
+    sessionPrompt: "pickup garden app github netlify deploy",
   },
   {
-    id: 3, score: 87, category: "DHE",
-    headline: "Monday: 13 threads crossed stale today — dispatch triage agent",
-    detail: "Three Apr 13 threads (cqr-log-row-fix, jen-config-v3.8.0, treasury-t-bill) crossed the 7-day threshold this morning, bringing stale count to 13 of 19. Monday is the right day to dispatch a triage agent: it scans each handoff file, checks if Pending is None or conditions are clearly met, and returns a kill/keep/merge list. Turns a 3-hour review into a 30-minute session.",
-    action: "Dispatch: 'Scan all active handoffs in handoff-index.md. For each, check if Pending items are None or clearly resolvable without new work. Return a kill/keep/merge list with one-line rationale per thread.'",
-    sessionPrompt: "I want to triage my 19 active threads. Scan all active handoffs in handoff-index.md. For each, check if Pending items are None or clearly resolved — return a kill/keep/merge list with one-line rationale. I'll approve each before any changes.",
+    id: 3, score: 84, category: "Dave-actionable-workflow",
+    headline: "AGOPS bundle installed — 1 pending item: verify OWNER MODE",
+    detail: "The AGOPS personal bundle V001 installed successfully (29 agents, 4 skills, Drive sync, launchd). The handoff notes one pending item: verify OWNER MODE at the next AGOPS session open. This is a single-step verification that confirms the fleet is accessible in owner mode.",
+    action: "Open a new session, type 'agent-ops' or check if OWNER MODE banner appears — verify 29 agents are visible and owner controls are active",
+    sessionPrompt: "pickup agops personal bundle install",
   },
   {
-    id: 4, score: 85, category: "Automation",
-    headline: "apply_manifest_update still pending — 1 terminal command closes 30 sessions",
-    detail: "The session-archive task ran clean Apr 19 (06:09Z, 7 sessions, Drive 7/7) but the manifest update script was left pending. apply_manifest_update_20260419.py has been queued since Apr 19. The Drive backlog is healthy — this is a local manifest gap only. One terminal command closes it.",
-    action: "Open Terminal: python3 ~/AI/Claude/apply_manifest_update_20260419.py (or check for the most recent dated version of this script).",
-    sessionPrompt: "What's the current state of my session-archive manifest? I need to run the pending apply_manifest_update script. Help me find the right file and verify it's safe to run.",
+    id: 4, score: 82, category: "Dave-actionable-workflow",
+    headline: "Gardening has 4+ active threads — a Project consolidates them",
+    detail: "You now have: garden-app-github-netlify, gardening-data-intake-s3, layer-2-spec-gate, and gardening-workflow all active. A Cowork Project would give all four a shared context doc — eliminating the per-session re-loading of the Supabase schema, zone hierarchy, and Layer 2 spec that each session currently bootstraps individually.",
+    action: "Create a Gardening Project in Cowork with a context doc containing: zone hierarchy (10x18x9ft + NNW wall + pasture ~400sqft), Supabase schema v2, Layer 2 build status, and GitHub repo name",
+    sessionPrompt: "Help me create a Cowork Project for my gardening app. I want a shared context doc with the zone layout, Supabase schema, and current build status so I don't have to re-explain it each session.",
   },
   {
-    id: 5, score: 82, category: "DHE",
-    headline: "Verify echo-confirm L-032 fires in next pickup session",
-    detail: "Handoff skill v2.3.0 wired in L-032 (token scan on opening message) 6 days ago. The pattern: when a session opens on a pickup and the first user message contains technical tokens, resolve against the handoff Pending section before bootstrap. This was a high-effort error (E-kind-tender-goldberg-001, ~20 tool calls lost). Monday is a good time to verify the wire-in is working — open a new pickup session and observe.",
-    action: "In next pickup session: watch whether Claude scans the opening message for technical tokens before asking clarifying questions. Report if it doesn't — that's a regression.",
-    sessionPrompt: "pickup dashboard conflict display bug",
+    id: 5, score: 80, category: "Dave-actionable-workflow",
+    headline: "29 AGOPS agents installed — name which 2-3 you'll actually dispatch this week",
+    detail: "AGOPS fleet V3.7 is live with 29 agents. The value isn't having them — it's dispatching them. Looking at this week's work: document-quality-analyst (just merged) fits gardening spec review; finance-investment-analyst fits treasury thread; boss-strategic fits any gardening architecture decision. But dispatching requires knowing which agent fits which task type.",
+    action: "Pick 2-3 agents from the fleet that match work you have this week. For each: write the one-line dispatch trigger ('when I have a [task type], dispatch [agent name]')",
+    sessionPrompt: "Open the AGOPS spec and help me identify which 3 agents I should actually dispatch this week based on my current handoff threads. Write the dispatch patterns for each.",
   },
   {
-    id: 6, score: 80, category: "Strategy",
-    headline: "AI consulting goal: Day 25 — no revenue touchpoint in 25 days",
-    detail: "The 90-day sprint (first paying engagement by Sep 26) is now at Day 25. Skills-progress-log flags a confirmed builder bias: 15+ infrastructure sessions, zero revenue-facing work. The freedom number ($2.98M by 2031) requires consulting income to start materializing this year. A 15-minute Monday review — just checking the goal horizon, not taking action — keeps focus from drifting entirely to infrastructure.",
-    action: "Spend 15 min today: review the AI consulting goal state, identify one revenue-adjacent action for this week (not necessarily outreach — could be portfolio, contract review, or market positioning).",
-    sessionPrompt: "I want to do a 15-minute AI consulting strategy check. Review my goals.json, skills-progress-log.md, and the finance freedom number. What's the highest-leverage revenue-adjacent action this week that isn't outreach?",
+    id: 6, score: 78, category: "Dave-actionable-strategy",
+    headline: "Gardening app built in 5+ sessions — dispatch patterns not codified",
+    detail: "The garden-workflow.md exists and the session-log.md was written, but the dispatch patterns (which agent for which gardening task type) were never captured as a reusable proc.md or CLAUDE.md rule. The next gardening session will figure this out again from scratch. The reuse-prep investment: one pass over the gardening session log to extract 3-4 repeatable patterns.",
+    action: "Read /Users/davenichols/AI/Claude/Projects/Gardening/workflow.md and identify which session steps would benefit from an agent dispatch pattern — write 2-3 concrete dispatch rules",
+    sessionPrompt: "Read my gardening workflow.md and session-log.md. Identify which recurring task types would benefit from dedicated agent dispatch. Write 3 dispatch patterns as reusable rules.",
   },
   {
-    id: 7, score: 78, category: "Learning",
-    headline: "mcp-behavior systemic: 3 occurrences — 2-line hot-cache in CLAUDE.md",
-    detail: "edit_file schema confusion has appeared 3 times (E-bold-peaceful-bardeen-001, E-relaxed-gifted-faraday-001, E-focused-modest-sagan-001). google_drive_fetch param confusion is at 2 (E-lucid-nice-brown-001, E-focused-modest-sagan-002). Both are pure working-memory failures — the schema difference is simple. A 2-line hot-cache in CLAUDE.md ops section eliminates both permanently.",
-    action: "Add to CLAUDE.md ops section: 'mcp__filesystem__edit_file → edits:[{oldText, newText}] array. mcp__*__google_drive_fetch → document_ids: string[] (plural). Built-in Edit → old_string/new_string.'",
-    sessionPrompt: "I want to add a hot-cache entry to CLAUDE.md for two recurring mcp-behavior errors: edit_file schema (edits array) and google_drive_fetch params (document_ids). Help me write the entry and place it in the right section.",
+    id: 7, score: 76, category: "Dave-actionable-workflow",
+    headline: "8+ gardening sessions yesterday — vault sweep while decisions are fresh",
+    detail: "Yesterday produced major architectural decisions: Supabase v2 schema, 3-layer GPS/QR/manual location system, LOC-007/008/009 resolutions, ADHD style guide crucible results. These are exactly the kind of vault-worthy decisions that disappear between sessions. The vault expansion directory (/ideas/, /notes/, /reference/) is still empty — this is the ideal first content.",
+    action: "Run a vault sweep for the gardening project: write /Users/davenichols/Obsidian/Claude/notes/2026-04-21-gardening-architecture.md with the key decisions from yesterday's 5+ sessions",
+    sessionPrompt: "I want to do a vault sweep for yesterday's gardening sessions. Read the gardening handoffs from Apr 20 and write a single Obsidian note capturing the key architectural decisions: Supabase schema, location system, and Layer 2 spec.",
   },
   {
-    id: 8, score: 76, category: "Infrastructure",
-    headline: "session-archive sentinel thread (12d stale): confirm sentinel + archive",
-    detail: "The quirky-gifted-heisenberg thread (session-archive sentinel verified) has been open 12 days. It confirmed the sentinel pattern exists in proc.md and the task-sentinels/ dir is live. The sentinel file should now be writing correctly on each 2 AM run. This is low-risk to close: verify the sentinel file is present and recent, then archive.",
-    action: "Check: ls -la ~/AI/Claude/task-sentinels/ — if session-archive sentinel is present and dated within 2 days, archive the quirky-gifted-heisenberg thread.",
-    sessionPrompt: "pickup session archive sentinel verified",
+    id: 8, score: 74, category: "Dave-actionable-workflow",
+    headline: "Session skill restart blocked on jen-config — gardening is a clean parallel track",
+    detail: "The session skill restart has been deferred pending jen-config stabilization (jen-setup-day thread still at Apr 1, 20d stale). But gardening is a new, active, multi-session domain with a clear repeatable workflow — an ideal place to pilot session skill patterns without waiting for jen-config. The gardening work you'd do anyway becomes a live test bed.",
+    action: "In the next gardening session: try 'gardening session' or a custom session trigger and note what friction remains — treat it as low-stakes session skill piloting",
+    sessionPrompt: "I want to pilot session skill patterns using my gardening project as a test bed. Help me design a simple 'gardening session' trigger that loads the right context (workflow.md, schema, active threads) with minimal friction.",
   },
   {
-    id: 9, score: 73, category: "Infrastructure",
-    headline: "deploy-pipeline.md FIRST-CHECK (AE-022, 6d): verify rule is correctly described",
-    detail: "AE-022 was deployed to CLAUDE.md on Apr 14 as a first-check rule for Netlify subdomain debugging. The rule says: before any build/bundle/CDN investigation, enumerate which Netlify project holds this domain alias. The deploy-pipeline.md FIRST-CHECK section should describe this specifically. Monday is a good time to read the deployed rule and verify it matches the intended behavior.",
-    action: "Read deploy-pipeline.md FIRST-CHECK section. Verify AE-022 is described accurately. If not, update in-session.",
-    sessionPrompt: "Read /Users/davenichols/AI/Claude/Personal Guides/deploy-pipeline.md and show me the FIRST-CHECK section. Verify AE-022 (Netlify project enumeration) is accurately described there.",
+    id: 9, score: 72, category: "Dave-actionable-workflow",
+    headline: "jen-config OI-030 scripts built — splice step 7t is the only pending item",
+    detail: "The jen-config vault-sync handoff (loving-wizardly-lamport) shows 4 scripts fully built: vault-backup-jen.py, vault-manifest-jen.json, setup-vault-backup.ps1, and import-prompt-step-7t.md. The single pending action is: splice step 7t into import prompt V005 (before STEP 8, adding checks 28-30). Estimated time: <30 min.",
+    action: "pickup jen config vault-sync build — splice step 7t into import-prompt-V005.md before STEP 8",
+    sessionPrompt: "pickup jen config vault-sync build",
   },
   {
-    id: 10, score: 72, category: "Confirmatory",
-    headline: "Last week's 5 process artifacts confirm builder momentum is real",
-    detail: "Despite the learning module score dropping to 60, last week produced 5 durable process artifacts: handoff v2.3.0 (L-032 wire-in), handoff v2.3.2, AE-022 CLAUDE.md rule, proc.md Step 6a ([DECISION] sourcing), and Netlify PAT stored. These are real system improvements that compound. The gap isn't momentum — it's code-versus-lesson alignment (L-036). Fix the code, not the process.",
-    action: "Acknowledge the momentum: the system is improving. The 60 score is a code gap, not a process failure. One code fix (L-036 wire-in) restores the score.",
-    sessionPrompt: "Review last week's process artifacts: handoff v2.3.0, AE-022, proc.md Step 6a. What's the cumulative improvement to session startup time and error prevention? Give me a before/after estimate.",
+    id: 10, score: 70, category: "Confirmatory",
+    headline: "3 major launches in 24 hours: AGOPS bundle, garden app, handoff v2.3.2",
+    detail: "Yesterday: AGOPS personal bundle V001 installed (29 agents, Drive sync, launchd), garden.futureishere.net live (5 sessions, full Supabase + React app), handoff v2.3.2 deployed (vault sweep enforcement). This is the most productive single day on record for infrastructure launches. The velocity is real — builder momentum confirmed.",
+    action: "None needed — this is signal worth recognizing. The pattern: multi-thread parallel days with agent dispatch are your highest-leverage format.",
+    sessionPrompt: "Review yesterday's completed work across the AGOPS, gardening, and handoff threads. Give me a confidence rating on the state of each — what's solid, what still has open edges.",
   },
 ];
 
+// Skills progress — dynamic fields only. Static metadata lives in SKILLS_META in the component section.
+// Schema: { name, level (New/Early/Maturing/Stable), trend (↑/→/↓) }
+// Authoritative list: always exactly these 6 Cowork skill files, always in this order.
 const SKILLS_PROGRESS = [
-  { name: "Calendar",      level: "Stable",   trend: "→" },
-  { name: "Handoff",       level: "Stable",   trend: "↑" },
-  { name: "Bible",         level: "Stable",   trend: "→" },
-  { name: "Cartography",   level: "Early",    trend: "↑" },
-  { name: "Skill Manager", level: "Stable",   trend: "→" },
-  { name: "Session",       level: "Early",    trend: "→" },
+  { name: "Calendar",      level: "Stable",  trend: "→" },
+  { name: "Handoff",       level: "Stable",  trend: "↑" },
+  { name: "Bible",         level: "Stable",  trend: "→" },
+  { name: "Cartography",   level: "Early",   trend: "→" },
+  { name: "Skill Manager", level: "Stable",  trend: "→" },
+  { name: "Session",       level: "Early",   trend: "→" },
 ];
 
 // ─── Thread Pulse ────────────────────────────────────────────────────────────
 const threads = [
-  { title: "dashboard conflict display bug",     project: "Claude",     status: "active", ageLabel: "5d",  summary: "Fixed blank ⚠️ icons — conflict field boolean true vs string; proc.md schema + prototype fallback patched.", pickupCmd: "pickup dashboard conflict display bug",     stale: false },
-  { title: "cowork settings paste",             project: "Claude",     status: "active", ageLabel: "6d",  summary: "All quirky-clever-hopper items done. Remaining: paste Global Instructions + User Preferences into Cowork Settings.", pickupCmd: "pickup cowork settings paste",             stale: false },
-  { title: "deploy pipeline followups",         project: "Claude",     status: "active", ageLabel: "6d",  summary: "5 crucible items: GitHub PAT tracking, vault write, CLAUDE.md rule extension, NS1 key, monthly health check.", pickupCmd: "pickup deploy pipeline followups",         stale: false },
-  { title: "raisin freshstart + everbank",      project: "Finance",    status: "active", ageLabel: "6d",  summary: "FRESHSTART + EverBank 4.10% likely stackable (~75% conf). Docx update + T-bill Apr 15 pending.", pickupCmd: "pickup raisin freshstart + everbank",      stale: false },
-  { title: "cqr log row fix",                  project: "Claude",     status: "active", ageLabel: "7d",  summary: "Fixed malformed great-quirky-heisenberg row — Conf-Range and FF columns swapped/malformed.", pickupCmd: "pickup cqr log row fix",                  stale: true  },
-  { title: "jen config v3.8.0 sync",           project: "jen-config", status: "active", ageLabel: "7d",  summary: "CLAUDE.md cascade complete, manifest v3.8.0. Drive manifest sync pending (1-min manual relay).", pickupCmd: "pickup jen config v3.8.0 sync",           stale: true  },
-  { title: "treasury t-bill execution",        project: "Finance",    status: "active", ageLabel: "7d",  summary: "8-week T-bills at Schwab, flat curve confirmed. $110k ready to deploy at Apr 15 auction.", pickupCmd: "pickup treasury t-bill execution",        stale: true  },
-  { title: "vault write enforcement",          project: "Claude",     status: "active", ageLabel: "11d", summary: "Option A deployed (handoff advisory). Option B (scheduled enrichment task) still unscoped.", pickupCmd: "pickup vault write enforcement",          stale: true  },
-  { title: "chat rename removal",              project: "Claude",     status: "active", ageLabel: "12d", summary: "Step 9 (queue session rename) excised from handoff skill v2.0.3. Daemon installed but idle — optional cleanup.", pickupCmd: "pickup chat rename removal",              stale: true  },
-  { title: "log health automation",            project: "Claude",     status: "active", ageLabel: "12d", summary: "session-archive.log and deploy-log.md parsed in dashboard Step 3j. Escalates SYSTEMS_STATUS on failures.", pickupCmd: "pickup log health automation",            stale: true  },
-  { title: "session archive sentinel verified",project: "Claude",     status: "active", ageLabel: "12d", summary: "Sentinel pattern confirmed in proc.md. task-sentinels/ dir live. Sentinel file should be writing on 2AM runs.", pickupCmd: "pickup session archive sentinel verified",stale: true  },
-  { title: "bootstrap phase 1 elimination",   project: "Claude",     status: "active", ageLabel: "14d", summary: "PREFS_KERNEL_V3 deployed. Open: investigate if filesystem MCP can be always-available (eliminates ToolSearch RT).", pickupCmd: "pickup bootstrap phase 1 elimination",   stale: true  },
-  { title: "delete stale scheduled task",     project: "Claude",     status: "active", ageLabel: "14d", summary: "skill-token-optimization-run confirmed disabled + absent from fleet. Manual removal via Cowork UI needed.", pickupCmd: "pickup delete stale scheduled task",     stale: true  },
-  { title: "dashboard tips overhaul",         project: "Claude",     status: "active", ageLabel: "15d", summary: "No-op session — all pending items carry forward from quirky-magical-meitner.", pickupCmd: "pickup dashboard tips overhaul",         stale: true  },
-  { title: "maquis inc research",             project: "Claude",     status: "active", ageLabel: "18d", summary: "Deep research on Maquis Inc. (NY, Sept 2025) and all businesses using 'Maquis' globally, tech/AI emphasis.", pickupCmd: "pickup maquis inc research",             stale: true  },
-  { title: "jen config project scoping",      project: "jen-config", status: "active", ageLabel: "17d", summary: "Scoped jen-config as standalone Project — crucible validated, 3 index hygiene items executed.", pickupCmd: "pickup jen config project scoping",      stale: true  },
-  { title: "jen setup day",                   project: "jen-config", status: "active", ageLabel: "19d", summary: "Consolidated setup day handoff — manifest v2.5.3, V4.2.0 canonical. Awaiting Jen's Windows machine.", pickupCmd: "pickup jen setup day",                   stale: true  },
-  { title: "optimistic-tender-galileo",       project: "Claude",     status: "loaded", ageLabel: "7d",  summary: "cqr-log row fix session — loaded state.", pickupCmd: "pickup cqr log row fix",                  stale: true  },
-  { title: "adoring-epic-gates",              project: "Claude",     status: "loaded", ageLabel: "18d", summary: "First session-archive run (19/264 sessions). Drive upload blocked — relay expects docId.", pickupCmd: "pickup session archive drive fix",        stale: true  },
+  { title: "garden app github netlify deploy", project: "Gardening", status: "active", ageLabel: "1d", summary: "All 23 source files pushed to GitHub. Netlify live at garden.futureishere.net. GitHub↔Netlify auto-deploy NOT connected — manual deploy required until linked in Netlify UI.", pickupCmd: "pickup garden app github netlify deploy", stale: false },
+  { title: "agops personal bundle install", project: "Claude", status: "active", ageLabel: "1d", summary: "AGOPS V001 installed — 29 agents, 4 skills, Drive sync, launchd. Pending: verify OWNER MODE at next session open.", pickupCmd: "pickup agops personal bundle install", stale: false },
+  { title: "jen config vault-sync build", project: "jen-config", status: "active", ageLabel: "1d", summary: "Scripts built for OI-030 (vault-backup-jen.py etc). Pending: splice step 7t into import prompt V005 before STEP 8.", pickupCmd: "pickup jen config vault-sync build", stale: false },
+  { title: "gardening data intake s3", project: "Gardening", status: "loaded", ageLabel: "1d", summary: "space-notes.md + plant-inventory.md written. 13 pepper varieties soaking. Tomato window ~Apr 27. Rodent/pest + temp topics not yet covered.", pickupCmd: "pickup gardening data intake s3", stale: false },
+  { title: "layer 2 spec gate closed", project: "Gardening", status: "loaded", ageLabel: "1d", summary: "LOC-007/008/009 resolved. 5 boss-technical spec items + auth security §10 written. Layer 2 build unblocked.", pickupCmd: "pickup layer 2 spec gate closed", stale: false },
+  { title: "dashboard conflict display bug", project: "Claude", status: "active", ageLabel: "6d", summary: "Fixed blank ⚠️ icons — conflict field was boolean true instead of string. proc.md schema + prototype defensive fallback fixed.", pickupCmd: "pickup dashboard conflict display bug", stale: false },
+  { title: "cowork settings paste", project: "Claude", status: "active", ageLabel: "7d", summary: "GI rearchitecture done, CLAUDE.md V3 check live, handoff v2.3.1 deployed. Remaining: Dave pastes Global Instructions + User Preferences into Cowork Settings.", pickupCmd: "pickup cowork settings paste", stale: true },
+  { title: "deploy pipeline followups", project: "Claude", status: "active", ageLabel: "7d", summary: "Five crucible items: GitHub PAT tracking, vault write, CLAUDE.md rule extension, NS1 key, monthly health check. RES-001/003/004 fixed.", pickupCmd: "pickup deploy pipeline followups", stale: true },
+  { title: "raisin freshstart + everbank stacking", project: "Finance", status: "active", ageLabel: "7d", summary: "FRESHSTART + EverBank 4.10% likely stackable (~75% conf). Docx update pending. T-bill April 15 open.", pickupCmd: "pickup raisin freshstart + everbank stacking research", stale: true },
+  { title: "treasury t-bill execution", project: "Finance", status: "active", ageLabel: "8d", summary: "8-week T-bills at Schwab, flat curve confirmed, $110k ready to deploy at Apr 15 auction.", pickupCmd: "pickup treasury t-bill execution", stale: true },
+  { title: "maquis inc research", project: "Claude", status: "active", ageLabel: "19d", summary: "Deep research on Maquis Inc. (NY, Sept 2025) and all businesses using Maquis globally, tech/AI emphasis.", pickupCmd: "pickup maquis inc research", stale: true },
+  { title: "jen config project scoping", project: "jen-config", status: "active", ageLabel: "18d", summary: "Scoped jen-config as standalone Project — crucible validated, 3 index hygiene items executed.", pickupCmd: "pickup jen config project scoping", stale: true },
+  { title: "dashboard tips overhaul", project: "Claude", status: "active", ageLabel: "16d", summary: "No-op session — all pending items carry forward from quirky-magical-meitner.", pickupCmd: "pickup dashboard tips overhaul", stale: true },
+  { title: "bootstrap phase 1 elimination", project: "Claude", status: "active", ageLabel: "15d", summary: "PREFS_KERNEL_V3 deployed. Open: investigate ToolSearch elimination for 1-round-trip filesystem bootstrap.", pickupCmd: "pickup bootstrap phase 1 elimination", stale: true },
+  { title: "delete stale scheduled task", project: "Claude", status: "active", ageLabel: "15d", summary: "skill-token-optimization-run disabled one-time task confirmed. No API delete exists — needs manual Cowork UI removal.", pickupCmd: "pickup delete stale scheduled task", stale: true },
+  { title: "chat rename removal", project: "Claude", status: "active", ageLabel: "13d", summary: "Step 9 (queue session rename) excised from handoff skill v2.0.3. Daemon idle — optional cleanup only.", pickupCmd: "pickup chat rename removal", stale: true },
+  { title: "log health automation", project: "Claude", status: "active", ageLabel: "13d", summary: "Automated daily log health checks in morning-dashboard Step 3j. session-archive.log and deploy-log.md now parsed.", pickupCmd: "pickup log health automation", stale: true },
+  { title: "session archive sentinel verified", project: "Claude", status: "active", ageLabel: "13d", summary: "session-archive proc has Completion Sentinel step; task-sentinels/ dir live; sentinel file absent until next run.", pickupCmd: "pickup session archive sentinel verified", stale: true },
+  { title: "cqr log row fix", project: "Claude", status: "active", ageLabel: "8d", summary: "Fixed malformed great-quirky-heisenberg row — Conf-Range and FF columns were swapped/malformed.", pickupCmd: "pickup cqr log row fix", stale: true },
+  { title: "vault write enforcement", project: "Claude", status: "active", ageLabel: "12d", summary: "Option A built (handoff v2.0.4 advisory vault write). Option B pending.", pickupCmd: "pickup vault write enforcement", stale: true },
+  { title: "jen setup day — ready to execute", project: "jen-config", status: "active", ageLabel: "20d", summary: "Consolidated setup day handoff — manifest v2.5.3, V4.2.0 canonical, all blockers cleared. Pick up on Jen's Windows machine.", pickupCmd: "pickup jen setup day — ready to execute", stale: true },
+  { title: "session archive drive fix", project: "Claude", status: "loaded", ageLabel: "19d", summary: "First session-archive run local (19/264 sessions). Drive upload blocked — relay expects docId.", pickupCmd: "pickup session archive drive fix", stale: true },
+  { title: "vault sweep deployed", project: "Claude", status: "loaded", ageLabel: "16d", summary: "Vault sweep step added to handoff skill v2.0.1 Write Flow. AE-015 written.", pickupCmd: "pickup vault sweep deployed", stale: true },
 ];
-const THREAD_COUNT = 19;
-const THREAD_STALE_COUNT = 13;
+const THREAD_COUNT = 23;
+const THREAD_STALE_COUNT = 17;
 
 // ─── Open Decisions ──────────────────────────────────────────────────────────
 const DECISIONS_LABEL = "0 open";
@@ -172,33 +181,28 @@ const openDecisions = [];
 
 // ─── Morning Intent ──────────────────────────────────────────────────────────
 const morningIntent = [
-  { rank: 1, text: "Paste Cowork settings — 15d overdue, 2 minutes, closes the Cowork Settings Sync advisory that fires every session", source: "systems", pickupCmd: "pickup cowork settings paste" },
-  { rank: 2, text: "Wire L-036 exclusion into tip generation code — root cause of 30-point learning audit drop (90→60). One code fix restores the score.", source: "systems", pickupCmd: "Help me wire the active tip exclusions (finance, consulting, tutoring: Kate/Emma/Lena/Nika) into the morning-dashboard tip generation code in proc.md." },
-  { rank: 3, text: "Monday thread triage — 13 of 19 threads stale. Dispatch agent to scan handoffs and return kill/keep/merge list before starting new work.", source: "threads", pickupCmd: "I want to triage my 19 active threads. Scan all active handoffs in handoff-index.md. For each, check if Pending items are None or clearly resolved — return a kill/keep/merge list with one-line rationale." },
+  { rank: 1, text: "Connect GitHub auto-deploy for garden app — prevents manual Netlify deploys for every Layer 2 code change (1 Netlify UI step)", source: "threads", pickupCmd: "pickup garden app github netlify deploy" },
+  { rank: 2, text: "Verify AGOPS OWNER MODE — single confirmation step after yesterday's bundle install, unlocks the full fleet", source: "threads", pickupCmd: "pickup agops personal bundle install" },
+  { rank: 3, text: "Paste Cowork settings — 2 files, 2 min, clears the 16-day drift flag that's been amber for 5 runs", source: "systems", pickupCmd: "pickup cowork settings paste" },
 ];
 
-// ─── Consulting Signals ───────────────────────────────────────────────────────
+// ─── Consulting Signals ──────────────────────────────────────────────────────
 const consultSignals = [];
-const CONSULT_SIGNAL_DATE = "2026-04-20";
+const CONSULT_SIGNAL_DATE = "2026-04-21";
 
-// ─── Goal Anchor ───────────────────────────────────────────────────────────────
+// ─── Goal Anchor ─────────────────────────────────────────────────────────────
 const goalAnchor = {
   label: "AI Consulting Practice",
   target: "First paying engagement",
-  milestone: "Day 25 of 184-day sprint",
+  milestone: "Day 26 of 184-day sprint",
   elapsedPct: 14,
   horizonLabel: "Sep 26, 2026",
 };
 
-// ─── Monday Scorecard ──────────────────────────────────────────────────────────
-const mondayScorecard = [
-  { domain: "Infrastructure",    lastWeekAvg: 93, trend: "↑" },
-  { domain: "Morning Dashboard", lastWeekAvg: 83, trend: "→" },
-  { domain: "Sessions / Work",   lastWeekAvg: 81, trend: "→" },
-  { domain: "Learning System",   lastWeekAvg: 75, trend: "↓" },
-];
+// ─── Monday Scorecard ────────────────────────────────────────────────────────
+const mondayScorecard = null;
 
-// ─── Dashboard Meta ───────────────────────────────────────────────────────────
+// ─── Dashboard Meta ──────────────────────────────────────────────────────────
 const dashboardMeta = {
   version: "V009-20260413",
   changelog: [
@@ -214,11 +218,21 @@ const dashboardMeta = {
     { date: "2026-03-24", type: "added",   item: "Monday Scorecard block",        note: "Weekly CQR analysis by domain, conditionally rendered on Mondays." },
   ],
   nextIdeas: [
-    { idea: "3-day momentum block", desc: "Yesterday's key action, today's primary move, what tomorrow unlocks. Makes sprint progress feel real even on slow days.", sessionPrompt: "I want to add a '3-day momentum' block to my morning dashboard. Draft the data schema and a React component matching the dashboard's visual style." },
-    { idea: "Weekly rhythm view",   desc: "Which day is deep work, outreach, Nika, rest. Puts each daily card in context of the week's intended shape.", sessionPrompt: "I want to add a weekly rhythm block to my morning dashboard showing my intended day-type for each day. Draft the data structure and a React component matching the dashboard's visual style." },
+    {
+      idea: "3-day momentum block",
+      desc: "Yesterday's key action, today's primary move, what tomorrow unlocks. Makes sprint progress feel real even on slow days.",
+      sessionPrompt: "I want to add a '3-day momentum' block to my morning dashboard. It should show: yesterday's key action, today's primary move, and what tomorrow unlocks. Draft the data schema and a React component matching the dashboard's visual style.",
+    },
+    {
+      idea: "Weekly rhythm view",
+      desc: "Which day is deep work, outreach, Nika, rest. Puts each daily card in context of the week's intended shape.",
+      sessionPrompt: "I want to add a weekly rhythm block to my morning dashboard showing my intended day-type for each day (deep work / outreach / family / rest). Draft the data structure and a React component matching the dashboard's visual style.",
+    },
   ],
 };
 
+
+// ═══════════════════════════════════════════════════════════════════════════
 // COMPONENT — Do not modify below this line.
 // ═══════════════════════════════════════════════════════════════════════════
 
